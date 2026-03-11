@@ -92,8 +92,19 @@
       </div>
       <p id="drop-main-text" class="font-semibold text-gray-800 text-sm mb-1">Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)</p>
       <p id="formats-text" class="text-gray-400 text-xs">Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL</p>
+      <!-- Format selector -->
+      <div class="mt-4 flex gap-2 items-center" onclick="event.stopPropagation()">
+        <button id="fmt-padrao" onclick="setFormat('Padrão')"
+          class="px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all">
+          Padrão (203dpi)
+        </button>
+        <button id="fmt-nitidez" onclick="setFormat('Nitidez+')"
+          class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 bg-white text-gray-500 font-medium transition-all hover:border-green-400 hover:text-green-600">
+          Nitidez+ (300dpi)
+        </button>
+      </div>
       <button onclick="event.stopPropagation(); document.getElementById('file-input').click()"
-              class="mt-5 flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors">
+              class="mt-4 flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span id="select-files-text">Selecionar Arquivos</span>
       </button>
@@ -326,6 +337,7 @@ const APP = {
   page: 1,
   perPage: 8,
   dateFilter: 'all',
+  selectedFormat: 'Padrão',
   typeFilter: 'all',
   search: '',
   lang: 'pt',
@@ -503,6 +515,17 @@ function handleFileSelect(e) {
   e.target.value = '';
 }
 
+function setFormat(fmt) {
+  APP.selectedFormat = fmt;
+  const isPadrao = fmt === 'Padrão';
+  document.getElementById('fmt-padrao').className = isPadrao
+    ? 'px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all'
+    : 'px-3 py-1.5 text-xs rounded-lg border border-gray-300 bg-white text-gray-500 font-medium transition-all hover:border-green-400 hover:text-green-600';
+  document.getElementById('fmt-nitidez').className = !isPadrao
+    ? 'px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all'
+    : 'px-3 py-1.5 text-xs rounded-lg border border-gray-300 bg-white text-gray-500 font-medium transition-all hover:border-green-400 hover:text-green-600';
+}
+
 async function processFiles(files) {
   const valid = files.filter(f => /\.(zpl|txt|zip)$/i.test(f.name));
   if (!valid.length) { alert('Nenhum arquivo válido. Use .txt, .zpl ou .zip'); return; }
@@ -516,7 +539,7 @@ async function processFiles(files) {
 
   const combined = allZPL.join('\n');
   const fname = valid.map(f => f.name).join(', ');
-  await convertAndSave(combined, 'Padrão', fname);
+  await convertAndSave(combined, APP.selectedFormat || 'Padrão', fname);
 }
 
 async function readFileZPL(file) {
@@ -536,23 +559,67 @@ async function readFileZPL(file) {
 // ================================================================
 // ZPL HELPERS
 // ================================================================
+function isPrintableLabel(block) {
+  // Strip structural tags and whitespace, check if anything printable remains
+  const inner = block.replace(/\^XA|\^XZ|\^FS/gi, '').replace(/\s+/g, '');
+  // ^IDR/^IDD/^IDN = delete/recall graphic commands only → skip
+  if (/^\^ID[RDFN]/i.test(inner)) return false;
+  // Empty or trivially short
+  if (inner.length < 4) return false;
+  return true;
+}
+
 function countLabels(zpl) {
   const m = zpl.match(/\^XA[\s\S]*?\^XZ/gi);
-  return m ? m.length : (zpl.trim() ? 1 : 0);
+  if (!m) return zpl.trim() ? 1 : 0;
+  const printable = m.filter(isPrintableLabel);
+  return printable.length || (zpl.trim() ? 1 : 0);
+}
+
+// Returns the indices of printable labels (skipping cleanup-only ones)
+function getPrintableLabelIndices(zpl) {
+  const m = zpl.match(/\^XA[\s\S]*?\^XZ/gi);
+  if (!m) return [0];
+  const indices = [];
+  m.forEach((block, i) => { if (isPrintableLabel(block)) indices.push(i); });
+  return indices.length ? indices : [0];
 }
 
 // ================================================================
 // LABELARY API
 // ================================================================
-async function fetchLabel(zpl, index, dpmm, w, h) {
+async function fetchLabel(zpl, index, dpmm, w, h, retry) {
+  retry = retry || 0;
   const url = `https://api.labelary.com/v1/printers/${dpmm}/labels/${w}x${h}/${index}/`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: zpl
-  });
-  if (!res.ok) throw new Error(`Labelary error ${res.status}`);
-  return await res.blob();
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Accept': 'image/png', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: zpl
+    });
+  } catch(e) {
+    if (retry < 2) {
+      await new Promise(r => setTimeout(r, 800));
+      return fetchLabel(zpl, index, dpmm, w, h, retry + 1);
+    }
+    throw new Error('Falha de rede ao conectar com a API Labelary. Verifique sua conexão.');
+  }
+  if (res.status === 404) return null; // label index doesn't exist, skip silently
+  if (res.status === 429) {
+    if (retry < 3) {
+      await new Promise(r => setTimeout(r, 1200 * (retry + 1)));
+      return fetchLabel(zpl, index, dpmm, w, h, retry + 1);
+    }
+    throw new Error('Limite de requisições da API Labelary atingido. Aguarde alguns segundos e tente novamente.');
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Labelary retornou erro ${res.status}${body ? ': ' + body.substring(0, 120) : ''}`);
+  }
+  const blob = await res.blob();
+  if (!blob || blob.size === 0) return null;
+  return blob;
 }
 
 // ================================================================
@@ -564,15 +631,20 @@ async function convertAndSave(zpl, format, filename) {
   showProc(true);
 
   try {
-    const count = countLabels(zpl);
+    const labelIndices = getPrintableLabelIndices(zpl);
+    const total = labelIndices.length;
     const dpmm = format === 'Nitidez+' ? '12dpmm' : '8dpmm';
     const imgs = [];
 
-    for (let i = 0; i < count; i++) {
-      document.getElementById('proc-msg').textContent = t('convertingLabel', i+1, count);
+    for (let i = 0; i < total; i++) {
+      document.getElementById('proc-msg').textContent = t('convertingLabel', i+1, total);
       document.getElementById('proc-sub').textContent = '';
-      const blob = await fetchLabel(zpl, i, dpmm, 4, 6);
-      imgs.push(blob);
+      const blob = await fetchLabel(zpl, labelIndices[i], dpmm, 4, 6);
+      if (blob) imgs.push(blob);
+    }
+
+    if (!imgs.length) {
+      throw new Error('A API Labelary não conseguiu gerar nenhuma imagem. Verifique se o arquivo ZPL é válido.');
     }
 
     document.getElementById('proc-msg').textContent = t('generatingPDF');
@@ -580,7 +652,7 @@ async function convertAndSave(zpl, format, filename) {
     storePDF(id, pdf);
 
     const ms = (Date.now() - t0) / 1000;
-    const rec = { id, date: new Date().toISOString(), labelCount: count, format, processingTime: +ms.toFixed(1), status: 'Pronto', filename };
+    const rec = { id, date: new Date().toISOString(), labelCount: imgs.length, format, processingTime: +ms.toFixed(1), status: 'Pronto', filename };
     APP.history.unshift(rec);
     saveHistory();
     saveZPL(id, zpl);
@@ -639,9 +711,12 @@ async function getPDF(id) {
   try {
     const dpmm = rec.format === 'Nitidez+' ? '12dpmm' : '8dpmm';
     const imgs = [];
-    for (let i = 0; i < rec.labelCount; i++) {
-      document.getElementById('proc-msg').textContent = t('convertingLabel', i+1, rec.labelCount);
-      imgs.push(await fetchLabel(zpl, i, dpmm, 4, 6));
+    const labelIndices = getPrintableLabelIndices(zpl);
+    const total = labelIndices.length;
+    for (let i = 0; i < total; i++) {
+      document.getElementById('proc-msg').textContent = t('convertingLabel', i+1, total);
+      const blob = await fetchLabel(zpl, labelIndices[i], dpmm, 4, 6);
+      if (blob) imgs.push(blob);
     }
     document.getElementById('proc-msg').textContent = t('generatingPDF');
     const pdf = await buildPDF(imgs);
