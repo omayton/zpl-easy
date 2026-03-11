@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conversor ZPL Online – ZPL Easy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .drop-active { background-color: #f0fdf4 !important; border-color: #16a34a !important; }
+    .status-pronto  { display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#16a34a;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600; }
+    .status-erro    { display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#dc2626;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600; }
+    .status-proc    { display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#d97706;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600; }
+    .fmt-badge      { display:inline-block;background:#ede9fe;color:#7c3aed;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:500; }
+    .fmt-nitidez    { background:#e0f2fe;color:#0369a1; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    ::-webkit-scrollbar { width:5px;height:5px; }
+    ::-webkit-scrollbar-thumb { background:#d1d5db;border-radius:4px; }
+    select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat;background-position:right 8px center;padding-right:24px !important; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="bg-white border-b border-gray-200 sticky top-0 z-40">
+  <div class="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between">
+    <span class="text-xl font-bold text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0,0)">ZPL Easy</span>
+    <div class="flex items-center gap-2">
+      <!-- Apoiar PIX -->
+      <button onclick="showModal('pix-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-full hover:bg-red-50 transition-colors">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        Apoiar <span class="bg-green-600 text-white text-xs px-1.5 py-0.5 rounded font-semibold">PIX</span>
+      </button>
+      <!-- Feedback -->
+      <button onclick="showModal('feedback-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Feedback
+      </button>
+      <!-- Language -->
+      <div class="relative">
+        <button id="lang-btn" onclick="toggleDropdown('lang-dd','lang-ov')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors" title="Idioma">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </button>
+        <div id="lang-dd" class="hidden absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50 min-w-[140px]">
+          <button onclick="setLang('pt')" id="lang-pt-btn" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4 transition-colors">
+            Português
+            <svg id="check-pt" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button onclick="setLang('en')" id="lang-en-btn" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4 transition-colors">
+            English
+            <svg id="check-en" class="hidden" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <!-- User Menu -->
+      <button onclick="toggleUserMenu()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ======================== BETA BANNER ======================== -->
+<div class="border border-amber-300 bg-amber-50 rounded-lg mx-4 mt-4 px-4 py-3 flex items-start gap-2">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" class="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <p id="beta-text" class="text-amber-800 text-sm">⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.</p>
+</div>
+
+<!-- ======================== MAIN ======================== -->
+<main class="max-w-screen-xl mx-auto px-4 mt-5 pb-16">
+  <p id="upload-label-text" class="text-sm font-medium text-gray-700 mb-3">Carregue seus arquivos ZPL para convertê-los para o formato PDF</p>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+    <!-- ---- UPLOAD PANEL ---- -->
+    <div id="drop-zone"
+         class="border-2 border-dashed border-gray-300 rounded-2xl bg-white p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[220px] select-none"
+         ondragover="handleDragOver(event)"
+         ondragleave="handleDragLeave(event)"
+         ondrop="handleDrop(event)"
+         onclick="document.getElementById('file-input').click()">
+      <div class="flex gap-3 mb-4">
+        <div class="w-12 h-12 rounded-xl border-2 border-green-500 flex items-center justify-center text-green-600 bg-green-50">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="w-12 h-12 rounded-xl border-2 border-green-500 flex items-center justify-center text-green-600 bg-green-50">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+      </div>
+      <p id="drop-main-text" class="font-semibold text-gray-800 text-sm mb-1">Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)</p>
+      <p id="formats-text" class="text-gray-400 text-xs">Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL</p>
+      <button onclick="event.stopPropagation(); document.getElementById('file-input').click()"
+              class="mt-5 flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span id="select-files-text">Selecionar Arquivos</span>
+      </button>
+      <input type="file" id="file-input" multiple accept=".txt,.zpl,.zip" class="hidden" onchange="handleFileSelect(event)" />
+    </div>
+
+    <!-- ---- HISTORY PANEL ---- -->
+    <div class="bg-white rounded-2xl border border-gray-200 flex flex-col overflow-hidden">
+
+      <!-- Header -->
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span id="history-title" class="font-semibold text-gray-800 text-sm">Histórico de Processamento</span>
+        </div>
+        <span id="total-count" class="text-xs text-gray-400">Total: 0 registros</span>
+      </div>
+
+      <!-- Summary -->
+      <div class="px-4 py-2 bg-gray-50 border-b border-gray-100 flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+        <span class="flex items-center gap-1.5 font-medium text-gray-700">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+          <span id="summary-label">Resumo</span>
+        </span>
+        <span class="flex items-center gap-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <strong id="total-labels" class="text-gray-700">0</strong> <span id="lbl-etiquetas">etiquetas</span>
+        </span>
+        <span class="text-gray-300">•</span>
+        <span class="flex items-center gap-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <strong id="total-conversions" class="text-gray-700">0</strong> <span id="lbl-conversoes">conversões</span>
+        </span>
+      </div>
+
+      <!-- Filters -->
+      <div class="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2 flex-wrap">
+        <div class="relative flex-1 min-w-[120px]">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search-input" oninput="handleSearch(this.value)"
+                 placeholder="Buscar..."
+                 class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 bg-white" />
+        </div>
+        <select onchange="handleDateFilter(this.value)" id="date-filter"
+                class="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-green-500 bg-white min-w-[120px]">
+          <option value="all" id="opt-all-dates">Todas as datas</option>
+          <option value="today" id="opt-today">Hoje</option>
+          <option value="7d"   id="opt-7d">Últimos 7 dias</option>
+          <option value="30d"  id="opt-30d">Últimos 30 dias</option>
+        </select>
+        <select onchange="handleTypeFilter(this.value)" id="type-filter"
+                class="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-green-500 bg-white min-w-[120px]">
+          <option value="all" id="opt-all-types">Todos os tipos</option>
+          <option value="Padrão">Padrão</option>
+          <option value="Nitidez+">Nitidez+</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-auto flex-1" style="max-height:340px">
+        <table class="w-full text-xs border-collapse">
+          <thead class="sticky top-0 bg-gray-50 z-10">
+            <tr class="text-left text-gray-500 font-medium">
+              <th class="w-8 px-3 py-2.5"></th>
+              <th class="px-3 py-2.5 whitespace-nowrap" id="col-date">Data</th>
+              <th class="px-3 py-2.5 whitespace-nowrap" id="col-qty">Quantidade de Etiquetas</th>
+              <th class="px-3 py-2.5 whitespace-nowrap" id="col-format">Formato de Impressão</th>
+              <th class="px-3 py-2.5 whitespace-nowrap" id="col-time">Processando...</th>
+              <th class="px-3 py-2.5 whitespace-nowrap" id="col-status">Status</th>
+              <th class="px-3 py-2.5"></th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr><td colspan="7" class="text-center py-12 text-gray-300 text-xs" id="empty-row">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-2 text-gray-200"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Carregando histórico...
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Auto-delete note -->
+      <div class="px-4 py-1.5 border-t border-gray-50 text-xs text-gray-400 text-center" id="auto-delete-note">
+        Registros e arquivos com mais de 60 dias são excluídos automaticamente.
+      </div>
+
+      <!-- Pagination -->
+      <div id="pagination" class="hidden px-4 py-2.5 border-t border-gray-100 flex items-center justify-center gap-1 flex-wrap"></div>
+    </div>
+
+  </div><!-- /grid -->
+</main>
+
+<!-- ======================== PROCESSING OVERLAY ======================== -->
+<div id="processing-overlay" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl p-7 flex flex-col items-center gap-3 shadow-2xl min-w-[200px]">
+    <svg class="spin text-green-600" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+    <p class="text-sm font-medium text-gray-700" id="proc-msg">Convertendo etiquetas...</p>
+    <p class="text-xs text-gray-400" id="proc-sub"></p>
+  </div>
+</div>
+
+<!-- ======================== PDF VIEWER MODAL ======================== -->
+<div id="pdf-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="handleModalBgClick(event,'pdf-modal')">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
+    <!-- Modal header -->
+    <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between shrink-0">
+      <span id="pdf-modal-title" class="font-semibold text-gray-800">Visualizar PDF</span>
+      <div class="flex items-center gap-2">
+        <button onclick="downloadCurrentPDF()" class="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span id="dl-btn-text">Baixar</span>
+        </button>
+        <button onclick="closeModal('pdf-modal')" class="p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 rounded-lg transition-colors">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <!-- PDF pages (canvas/images rendered here) -->
+    <div id="pdf-inner" class="flex-1 overflow-auto bg-gray-700 p-4 flex flex-col items-center gap-3">
+      <!-- filled dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- ======================== FEEDBACK MODAL ======================== -->
+<div id="feedback-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="handleModalBgClick(event,'feedback-modal')">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
+      <span class="font-semibold text-gray-800">Enviar Feedback</span>
+      <button onclick="closeModal('feedback-modal')" class="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="p-5 flex flex-col gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
+        <select id="feedback-type" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500 bg-white">
+          <option>Sugestão</option>
+          <option>Bug / Erro</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Mensagem</label>
+        <textarea id="feedback-msg" rows="4" placeholder="Descreva seu feedback..."
+                  class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"></textarea>
+      </div>
+      <button onclick="submitFeedback()" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2.5 rounded-xl font-semibold transition-colors">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== PIX MODAL ======================== -->
+<div id="pix-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="handleModalBgClick(event,'pix-modal')">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs text-center">
+    <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
+      <span class="font-semibold text-gray-800">Apoie o projeto! 💚</span>
+      <button onclick="closeModal('pix-modal')" class="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <p class="text-sm text-gray-600 mb-4">Contribua via PIX</p>
+      <div class="w-44 h-44 bg-gray-100 mx-auto rounded-xl flex flex-col items-center justify-center gap-2">
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="5" y="5" width="3" height="3" fill="#9ca3af" stroke="none"/><rect x="16" y="5" width="3" height="3" fill="#9ca3af" stroke="none"/><rect x="5" y="16" width="3" height="3" fill="#9ca3af" stroke="none"/>
+          <line x1="14" y1="14" x2="21" y2="14"/><line x1="14" y1="17" x2="17" y2="17"/><line x1="17" y1="20" x2="21" y2="20"/><line x1="21" y1="17" x2="21" y2="20"/>
+        </svg>
+        <span class="text-xs text-gray-400">QR Code PIX</span>
+      </div>
+      <p class="text-xs text-gray-400 mt-3">Escaneie com a câmera do app do seu banco</p>
+      <p class="text-xs text-gray-400 mt-1">Outras formas de doar</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== USER MENU PANEL ======================== -->
+<div id="user-menu-overlay" class="hidden fixed inset-0 z-40 bg-transparent" onclick="closeUserMenu()"></div>
+<div id="user-menu" class="hidden fixed right-0 top-0 h-full w-72 bg-white shadow-2xl z-50 flex flex-col transition-transform">
+  <!-- Header -->
+  <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <span class="font-semibold text-gray-800">Menu do Usuário</span>
+    <button onclick="closeUserMenu()" class="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <!-- User info -->
+  <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="min-w-0">
+      <p id="menu-username" class="text-sm font-medium text-gray-900 truncate">Usuário Local</p>
+      <p id="menu-email" class="text-xs text-gray-500 truncate">usuario@local.com</p>
+    </div>
+  </div>
+  <!-- Links -->
+  <div class="flex-1 px-3 py-2">
+    <button onclick="closeUserMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Início
+    </button>
+    <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair
+    </button>
+  </div>
+  <!-- Delete account -->
+  <div class="px-3 py-3 border-t border-gray-100">
+    <button onclick="handleDeleteAccount()" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors font-medium">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      Excluir Conta
+    </button>
+  </div>
+</div>
+
+<!-- ======================== DROPDOWN OVERLAY ======================== -->
+<div id="lang-ov" class="hidden fixed inset-0 z-40" onclick="toggleDropdown('lang-dd','lang-ov')"></div>
+
+<!-- ======================== JAVASCRIPT ======================== -->
+<script>
+// ================================================================
+// STATE
+// ================================================================
+const APP = {
+  history: [],
+  filtered: [],
+  page: 1,
+  perPage: 8,
+  dateFilter: 'all',
+  typeFilter: 'all',
+  search: '',
+  lang: 'pt',
+  currentViewId: null,
+};
+const pdfStore = {}; // id -> { blob, url }
+const HIST_KEY = 'zpl_easy_v2_history';
+const ZPL_KEY  = 'zpl_easy_v2_zpl';
+
+// ================================================================
+// I18N
+// ================================================================
+const T = {
+  pt: {
+    beta: '⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.',
+    uploadLabel: 'Carregue seus arquivos ZPL para convertê-los para o formato PDF',
+    dropMain: 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)',
+    formats: 'Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL',
+    selectFiles: 'Selecionar Arquivos',
+    histTitle: 'Histórico de Processamento',
+    summary: 'Resumo',
+    etiquetas: 'etiquetas',
+    conversoes: 'conversões',
+    allDates: 'Todas as datas',
+    today: 'Hoje',
+    last7: 'Últimos 7 dias',
+    last30: 'Últimos 30 dias',
+    allTypes: 'Todos os tipos',
+    colDate: 'Data',
+    colQty: 'Quantidade de Etiquetas',
+    colFmt: 'Formato de Impressão',
+    colTime: 'Processando...',
+    colStatus: 'Status',
+    autoDelete: 'Registros e arquivos com mais de 60 dias são excluídos automaticamente.',
+    noRecords: 'Nenhum registro encontrado',
+    prev: 'Anterior',
+    next: 'Próximo',
+    viewPDF: 'Visualizar PDF',
+    download: 'Baixar',
+    ready: 'Pronto',
+    error: 'Erro',
+    processing: 'Processando...',
+    convertingLabel: (i,n) => `Convertendo etiqueta ${i} de ${n}...`,
+    generatingPDF: 'Gerando PDF...',
+    totalReg: (n) => `Total: ${n} registros`,
+  },
+  en: {
+    beta: '⚙️ This tool is in BETA and DEVELOPMENT phase. For issues or suggestions, use the Feedback button.',
+    uploadLabel: 'Upload your ZPL files to convert them to PDF format',
+    dropMain: 'Drag and drop your files here (multiple files supported)',
+    formats: 'Accepted formats: .txt, .zpl or .zip with ZPL files',
+    selectFiles: 'Select Files',
+    histTitle: 'Processing History',
+    summary: 'Summary',
+    etiquetas: 'labels',
+    conversoes: 'conversions',
+    allDates: 'All dates',
+    today: 'Today',
+    last7: 'Last 7 days',
+    last30: 'Last 30 days',
+    allTypes: 'All types',
+    colDate: 'Date',
+    colQty: 'Label Count',
+    colFmt: 'Print Format',
+    colTime: 'Processing...',
+    colStatus: 'Status',
+    autoDelete: 'Records and files older than 60 days are automatically deleted.',
+    noRecords: 'No records found',
+    prev: 'Previous',
+    next: 'Next',
+    viewPDF: 'View PDF',
+    download: 'Download',
+    ready: 'Ready',
+    error: 'Error',
+    processing: 'Processing...',
+    convertingLabel: (i,n) => `Converting label ${i} of ${n}...`,
+    generatingPDF: 'Generating PDF...',
+    totalReg: (n) => `Total: ${n} records`,
+  }
+};
+
+function t(k, ...args) {
+  const v = T[APP.lang][k];
+  return typeof v === 'function' ? v(...args) : (v || k);
+}
+
+function applyTranslations() {
+  const l = APP.lang;
+  document.getElementById('beta-text').textContent = t('beta');
+  document.getElementById('upload-label-text').textContent = t('uploadLabel');
+  document.getElementById('drop-main-text').textContent = t('dropMain');
+  document.getElementById('formats-text').textContent = t('formats');
+  document.getElementById('select-files-text').textContent = t('selectFiles');
+  document.getElementById('history-title').textContent = t('histTitle');
+  document.getElementById('summary-label').textContent = t('summary');
+  document.getElementById('lbl-etiquetas').textContent = t('etiquetas');
+  document.getElementById('lbl-conversoes').textContent = t('conversoes');
+  document.getElementById('opt-all-dates').textContent = t('allDates');
+  document.getElementById('opt-today').textContent = t('today');
+  document.getElementById('opt-7d').textContent = t('last7');
+  document.getElementById('opt-30d').textContent = t('last30');
+  document.getElementById('opt-all-types').textContent = t('allTypes');
+  document.getElementById('col-date').textContent = t('colDate');
+  document.getElementById('col-qty').textContent = t('colQty');
+  document.getElementById('col-format').textContent = t('colFmt');
+  document.getElementById('col-time').textContent = t('colTime');
+  document.getElementById('col-status').textContent = t('colStatus');
+  document.getElementById('auto-delete-note').textContent = t('autoDelete');
+  document.getElementById('pdf-modal-title').textContent = t('viewPDF');
+  document.getElementById('dl-btn-text').textContent = t('download');
+  document.getElementById('check-pt').classList.toggle('hidden', l !== 'pt');
+  document.getElementById('check-en').classList.toggle('hidden', l !== 'en');
+  document.documentElement.lang = l === 'pt' ? 'pt-BR' : 'en';
+  renderHistory();
+  renderSummary();
+}
+
+// ================================================================
+// LOCAL STORAGE
+// ================================================================
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HIST_KEY);
+    APP.history = raw ? JSON.parse(raw) : [];
+    const cutoff = Date.now() - 60 * 86400000;
+    APP.history = APP.history.filter(r => new Date(r.date).getTime() > cutoff);
+    saveHistory();
+  } catch(e) { APP.history = []; }
+}
+
+function saveHistory() {
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(APP.history)); } catch(e) {}
+}
+
+function saveZPL(id, zpl) {
+  try {
+    const d = JSON.parse(localStorage.getItem(ZPL_KEY) || '{}');
+    d[id] = zpl;
+    localStorage.setItem(ZPL_KEY, JSON.stringify(d));
+  } catch(e) {}
+}
+
+function getZPL(id) {
+  try {
+    const d = JSON.parse(localStorage.getItem(ZPL_KEY) || '{}');
+    return d[id] || null;
+  } catch(e) { return null; }
+}
+
+function deleteZPL(id) {
+  try {
+    const d = JSON.parse(localStorage.getItem(ZPL_KEY) || '{}');
+    delete d[id];
+    localStorage.setItem(ZPL_KEY, JSON.stringify(d));
+  } catch(e) {}
+}
+
+// ================================================================
+// FILE HANDLING
+// ================================================================
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.add('drop-active');
+}
+function handleDragLeave(e) {
+  document.getElementById('drop-zone').classList.remove('drop-active');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drop-active');
+  processFiles(Array.from(e.dataTransfer.files));
+}
+function handleFileSelect(e) {
+  processFiles(Array.from(e.target.files));
+  e.target.value = '';
+}
+
+async function processFiles(files) {
+  const valid = files.filter(f => /\.(zpl|txt|zip)$/i.test(f.name));
+  if (!valid.length) { alert('Nenhum arquivo válido. Use .txt, .zpl ou .zip'); return; }
+
+  const allZPL = [];
+  for (const f of valid) {
+    const zpl = await readFileZPL(f);
+    if (zpl) allZPL.push(...zpl);
+  }
+  if (!allZPL.length) { alert('Nenhum conteúdo ZPL encontrado nos arquivos.'); return; }
+
+  const combined = allZPL.join('\n');
+  const fname = valid.map(f => f.name).join(', ');
+  await convertAndSave(combined, 'Padrão', fname);
+}
+
+async function readFileZPL(file) {
+  if (/\.zip$/i.test(file.name)) {
+    const zip = await JSZip.loadAsync(file);
+    const results = [];
+    for (const [name, entry] of Object.entries(zip.files)) {
+      if (/\.(zpl|txt)$/i.test(name) && !entry.dir) {
+        results.push(await entry.async('text'));
+      }
+    }
+    return results;
+  }
+  return [await file.text()];
+}
+
+// ================================================================
+// ZPL HELPERS
+// ================================================================
+function countLabels(zpl) {
+  const m = zpl.match(/\^XA[\s\S]*?\^XZ/gi);
+  return m ? m.length : (zpl.trim() ? 1 : 0);
+}
+
+// ================================================================
+// LABELARY API
+// ================================================================
+async function fetchLabel(zpl, index, dpmm, w, h) {
+  const url = `https://api.labelary.com/v1/printers/${dpmm}/labels/${w}x${h}/${index}/`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: zpl
+  });
+  if (!res.ok) throw new Error(`Labelary error ${res.status}`);
+  return await res.blob();
+}
+
+// ================================================================
+// CONVERSION
+// ================================================================
+async function convertAndSave(zpl, format, filename) {
+  const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+  const t0 = Date.now();
+  showProc(true);
+
+  try {
+    const count = countLabels(zpl);
+    const dpmm = format === 'Nitidez+' ? '12dpmm' : '8dpmm';
+    const imgs = [];
+
+    for (let i = 0; i < count; i++) {
+      document.getElementById('proc-msg').textContent = t('convertingLabel', i+1, count);
+      document.getElementById('proc-sub').textContent = '';
+      const blob = await fetchLabel(zpl, i, dpmm, 4, 6);
+      imgs.push(blob);
+    }
+
+    document.getElementById('proc-msg').textContent = t('generatingPDF');
+    const pdf = await buildPDF(imgs);
+    storePDF(id, pdf);
+
+    const ms = (Date.now() - t0) / 1000;
+    const rec = { id, date: new Date().toISOString(), labelCount: count, format, processingTime: +ms.toFixed(1), status: 'Pronto', filename };
+    APP.history.unshift(rec);
+    saveHistory();
+    saveZPL(id, zpl);
+
+  } catch(err) {
+    const ms = (Date.now() - t0) / 1000;
+    let msg = err.message;
+    if (err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('cors') || err.message.toLowerCase().includes('failed')) {
+      msg = 'Erro de rede. Tente servir o arquivo via servidor local (ex: python3 -m http.server).';
+    }
+    const rec = { id, date: new Date().toISOString(), labelCount: 0, format, processingTime: +ms.toFixed(1), status: 'Erro', filename, error: msg };
+    APP.history.unshift(rec);
+    saveHistory();
+  }
+
+  showProc(false);
+  applyFilters();
+  renderHistory();
+  renderSummary();
+}
+
+// ================================================================
+// PDF GENERATION
+// ================================================================
+async function buildPDF(imageBlobs) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'in', format: [4, 6], orientation: 'portrait' });
+  for (let i = 0; i < imageBlobs.length; i++) {
+    if (i > 0) doc.addPage([4, 6], 'portrait');
+    const dataUrl = await blobToDataURL(imageBlobs[i]);
+    doc.addImage(dataUrl, 'PNG', 0, 0, 4, 6);
+  }
+  return doc.output('blob');
+}
+
+function blobToDataURL(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
+function storePDF(id, blob) {
+  if (pdfStore[id]) URL.revokeObjectURL(pdfStore[id].url);
+  pdfStore[id] = { blob, url: URL.createObjectURL(blob) };
+}
+
+async function getPDF(id) {
+  if (pdfStore[id]) return pdfStore[id];
+  const zpl = getZPL(id);
+  const rec = APP.history.find(r => r.id === id);
+  if (!zpl || !rec) return null;
+  showProc(true, 'Carregando PDF...');
+  try {
+    const dpmm = rec.format === 'Nitidez+' ? '12dpmm' : '8dpmm';
+    const imgs = [];
+    for (let i = 0; i < rec.labelCount; i++) {
+      document.getElementById('proc-msg').textContent = t('convertingLabel', i+1, rec.labelCount);
+      imgs.push(await fetchLabel(zpl, i, dpmm, 4, 6));
+    }
+    document.getElementById('proc-msg').textContent = t('generatingPDF');
+    const pdf = await buildPDF(imgs);
+    storePDF(id, pdf);
+    return pdfStore[id];
+  } catch(e) {
+    alert('Erro ao regenerar PDF: ' + e.message);
+    return null;
+  } finally {
+    showProc(false);
+  }
+}
+
+// ================================================================
+// FILTERS & RENDER
+// ================================================================
+function applyFilters() {
+  let f = [...APP.history];
+  if (APP.search) {
+    const q = APP.search.toLowerCase();
+    f = f.filter(r => (r.filename||'').toLowerCase().includes(q) || (r.format||'').toLowerCase().includes(q) || (r.status||'').toLowerCase().includes(q));
+  }
+  if (APP.dateFilter === 'today') {
+    const tod = new Date().toDateString();
+    f = f.filter(r => new Date(r.date).toDateString() === tod);
+  } else if (APP.dateFilter === '7d') {
+    const cut = Date.now() - 7*86400000;
+    f = f.filter(r => new Date(r.date) >= cut);
+  } else if (APP.dateFilter === '30d') {
+    const cut = Date.now() - 30*86400000;
+    f = f.filter(r => new Date(r.date) >= cut);
+  }
+  if (APP.typeFilter !== 'all') f = f.filter(r => r.format === APP.typeFilter);
+  APP.filtered = f;
+  APP.page = 1;
+}
+
+function handleSearch(v) { APP.search = v; applyFilters(); renderHistory(); }
+function handleDateFilter(v) { APP.dateFilter = v; applyFilters(); renderHistory(); }
+function handleTypeFilter(v) { APP.typeFilter = v; applyFilters(); renderHistory(); }
+
+function renderHistory() {
+  const tbody = document.getElementById('history-tbody');
+  const { filtered, page, perPage } = APP;
+  document.getElementById('total-count').textContent = t('totalReg', APP.history.length);
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-300 text-xs">${t('noRecords')}</td></tr>`;
+    document.getElementById('pagination').classList.add('hidden');
+    return;
+  }
+
+  const slice = filtered.slice((page-1)*perPage, page*perPage);
+  tbody.innerHTML = slice.map(r => {
+    const d = new Date(r.date);
+    const ds = d.toLocaleDateString('pt-BR') + ' ' + d.toTimeString().slice(0,5);
+    const fmtClass = r.format === 'Nitidez+' ? 'fmt-badge fmt-nitidez' : 'fmt-badge';
+    const stCls = r.status === 'Pronto' ? 'status-pronto' : r.status === 'Erro' ? 'status-erro' : 'status-proc';
+    const stTxt = r.status === 'Pronto' ? t('ready') : r.status === 'Erro' ? t('error') : t('processing');
+    const stIcon = r.status === 'Pronto'
+      ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`
+      : r.status === 'Erro'
+      ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+      : `<svg class="spin" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+
+    const viewBtn = r.status === 'Pronto'
+      ? `<button onclick="viewPDF('${r.id}')" title="Visualizar"
+           class="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+         </button>` : '';
+
+    return `
+    <tr class="border-t border-gray-50 hover:bg-gray-50/60 transition-colors group">
+      <td class="px-3 py-2.5">
+        <input type="checkbox" class="w-3.5 h-3.5 rounded accent-green-600">
+      </td>
+      <td class="px-3 py-2.5 text-gray-600 whitespace-nowrap">
+        <span class="flex items-center gap-1.5">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          ${ds}
+        </span>
+      </td>
+      <td class="px-3 py-2.5">
+        <span class="flex items-center gap-1 text-gray-700">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          ${r.labelCount}
+        </span>
+      </td>
+      <td class="px-3 py-2.5"><span class="${fmtClass}">${r.format}</span></td>
+      <td class="px-3 py-2.5 text-gray-500">
+        <span class="flex items-center gap-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          ${r.processingTime}s
+        </span>
+      </td>
+      <td class="px-3 py-2.5"><span class="${stCls}">${stIcon}${stTxt}</span></td>
+      <td class="px-3 py-2.5">
+        <div class="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+          ${viewBtn}
+          <button onclick="deleteRecord('${r.id}')" title="Excluir"
+            class="p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(APP.filtered.length / APP.perPage);
+  const pg = document.getElementById('pagination');
+  if (total <= 1) { pg.classList.add('hidden'); return; }
+  pg.classList.remove('hidden');
+
+  const cur = APP.page;
+  let pages = [];
+  if (total <= 5) for (let i=1;i<=total;i++) pages.push(i);
+  else if (cur <= 3) pages = [1,2,3,4,5];
+  else if (cur >= total-2) { for(let i=total-4;i<=total;i++) pages.push(i); }
+  else { for(let i=cur-2;i<=cur+2;i++) pages.push(i); }
+
+  pg.innerHTML =
+    `<button onclick="goPage(${cur-1})" ${cur===1?'disabled':''} class="px-2.5 py-1.5 text-xs text-gray-500 hover:bg-gray-100 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← ${t('prev')}</button>` +
+    pages.map(p => `<button onclick="goPage(${p})" class="w-7 h-7 text-xs rounded-lg transition-colors ${p===cur?'bg-green-600 text-white font-bold':'text-gray-600 hover:bg-gray-100'}">${p}</button>`).join('') +
+    `<button onclick="goPage(${cur+1})" ${cur===total?'disabled':''} class="px-2.5 py-1.5 text-xs text-gray-500 hover:bg-gray-100 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors">${t('next')} →</button>`;
+}
+
+function goPage(p) {
+  const tot = Math.ceil(APP.filtered.length / APP.perPage);
+  if (p < 1 || p > tot) return;
+  APP.page = p;
+  renderHistory();
+}
+
+function renderSummary() {
+  document.getElementById('total-labels').textContent = APP.history.reduce((s,r) => s + (r.labelCount||0), 0);
+  document.getElementById('total-conversions').textContent = APP.history.length;
+  document.getElementById('total-count').textContent = t('totalReg', APP.history.length);
+}
+
+// ================================================================
+// PDF VIEWER
+// ================================================================
+async function viewPDF(id) {
+  const data = await getPDF(id);
+  if (!data) return;
+  APP.currentViewId = id;
+  const inner = document.getElementById('pdf-inner');
+  inner.innerHTML = `<iframe src="${data.url}" frameborder="0" style="width:100%;min-height:560px;min-width:380px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.4)"></iframe>`;
+  showModal('pdf-modal');
+}
+
+async function downloadCurrentPDF() {
+  if (!APP.currentViewId) return;
+  const data = pdfStore[APP.currentViewId];
+  if (!data) return;
+  const a = document.createElement('a');
+  a.href = data.url;
+  a.download = `label-${APP.currentViewId.slice(0,8)}.pdf`;
+  a.click();
+}
+
+// ================================================================
+// DELETE
+// ================================================================
+function deleteRecord(id) {
+  if (!confirm('Confirmar exclusão deste registro?')) return;
+  APP.history = APP.history.filter(r => r.id !== id);
+  saveHistory();
+  deleteZPL(id);
+  if (pdfStore[id]) { URL.revokeObjectURL(pdfStore[id].url); delete pdfStore[id]; }
+  applyFilters();
+  renderHistory();
+  renderSummary();
+}
+
+// ================================================================
+// MODALS
+// ================================================================
+function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  if (id === 'pdf-modal') { APP.currentViewId = null; }
+}
+function handleModalBgClick(e, id) {
+  if (e.target === e.currentTarget) closeModal(id);
+}
+
+// ================================================================
+// LANGUAGE
+// ================================================================
+function setLang(l) {
+  APP.lang = l;
+  toggleDropdown('lang-dd','lang-ov');
+  applyTranslations();
+}
+
+// ================================================================
+// USER MENU
+// ================================================================
+function toggleUserMenu() {
+  const m = document.getElementById('user-menu');
+  const ov = document.getElementById('user-menu-overlay');
+  const open = m.classList.contains('hidden');
+  m.classList.toggle('hidden', !open);
+  ov.classList.toggle('hidden', !open);
+}
+function closeUserMenu() {
+  document.getElementById('user-menu').classList.add('hidden');
+  document.getElementById('user-menu-overlay').classList.add('hidden');
+}
+function handleLogout() { closeUserMenu(); alert('Sessão encerrada.'); }
+function handleDeleteAccount() {
+  if (!confirm('Tem certeza que deseja excluir todos os dados? Esta ação não pode ser desfeita.')) return;
+  localStorage.removeItem(HIST_KEY);
+  localStorage.removeItem(ZPL_KEY);
+  Object.keys(pdfStore).forEach(id => URL.revokeObjectURL(pdfStore[id].url));
+  APP.history = []; APP.filtered = [];
+  closeUserMenu();
+  renderHistory(); renderSummary();
+}
+
+// ================================================================
+// FEEDBACK
+// ================================================================
+function submitFeedback() {
+  const msg = document.getElementById('feedback-msg').value.trim();
+  if (!msg) { alert('Escreva uma mensagem antes de enviar.'); return; }
+  closeModal('feedback-modal');
+  document.getElementById('feedback-msg').value = '';
+  setTimeout(() => alert('Feedback enviado com sucesso! Obrigado.'), 100);
+}
+
+// ================================================================
+// DROPDOWN
+// ================================================================
+function toggleDropdown(ddId, ovId) {
+  document.getElementById(ddId).classList.toggle('hidden');
+  document.getElementById(ovId).classList.toggle('hidden');
+}
+
+// ================================================================
+// PROCESSING UI
+// ================================================================
+function showProc(show, msg) {
+  const el = document.getElementById('processing-overlay');
+  if (show) {
+    if (msg) document.getElementById('proc-msg').textContent = msg;
+    el.classList.remove('hidden');
+  } else {
+    el.classList.add('hidden');
+    document.getElementById('proc-msg').textContent = t('processing');
+    document.getElementById('proc-sub').textContent = '';
+  }
+}
+
+// ================================================================
+// ESC KEY
+// ================================================================
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  ['pdf-modal','feedback-modal','pix-modal'].forEach(id => {
+    if (!document.getElementById(id).classList.contains('hidden')) closeModal(id);
+  });
+  if (!document.getElementById('user-menu').classList.contains('hidden')) closeUserMenu();
+  if (!document.getElementById('lang-dd').classList.contains('hidden')) toggleDropdown('lang-dd','lang-ov');
+});
+
+// ================================================================
+// INIT
+// ================================================================
+(function init() {
+  loadHistory();
+  applyFilters();
+  renderHistory();
+  renderSummary();
+  applyTranslations();
+})();
+</script>
+</body>
+</html>
