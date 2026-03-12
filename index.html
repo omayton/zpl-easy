@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .drop-active { background-color: #f0fdf4 !important; border-color: #16a34a !important; }
@@ -20,6 +21,16 @@
     ::-webkit-scrollbar { width:5px;height:5px; }
     ::-webkit-scrollbar-thumb { background:#d1d5db;border-radius:4px; }
     select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat;background-position:right 8px center;padding-right:24px !important; }
+    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px; }
+    .modal-box { background:#fff;border-radius:16px;padding:28px;width:100%;max-width:420px;position:relative; }
+    .auth-tab-active { border-bottom:2px solid #16a34a;color:#15803d;font-weight:600; }
+    .auth-tab { border-bottom:2px solid transparent;color:#6b7280;font-weight:500; }
+    .input-field { width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 12px;font-size:14px;outline:none;transition:border-color 0.15s; }
+    .input-field:focus { border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,0.1); }
+    .btn-green { background:#16a34a;color:#fff;border-radius:8px;padding:10px 0;font-size:14px;font-weight:600;width:100%;cursor:pointer;border:none;transition:background 0.15s; }
+    .btn-green:hover { background:#15803d; }
+    .btn-green:disabled { background:#86efac;cursor:not-allowed; }
+    .user-avatar { width:30px;height:30px;border-radius:999px;background:#dcfce7;color:#15803d;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #86efac; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -55,8 +66,37 @@
           </button>
         </div>
       </div>
-      <!-- User Menu -->
-      <button onclick="toggleUserMenu()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+      <!-- Auth button / user menu -->
+      <div class="relative" id="auth-nav-wrap">
+        <!-- Logged out: Login button -->
+        <button id="nav-login-btn" onclick="openAuthModal('login')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors font-medium">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Entrar
+        </button>
+        <!-- Logged in: avatar + dropdown -->
+        <button id="nav-user-btn" onclick="toggleDropdown('user-dd','user-ov')" class="hidden items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
+          <div class="user-avatar" id="nav-avatar">U</div>
+          <span id="nav-email-short" class="text-sm text-gray-700 font-medium max-w-[120px] truncate hidden sm:block"></span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="user-dd" class="hidden absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[200px] overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-100">
+            <p class="text-xs text-gray-400 font-medium">Conta</p>
+            <p id="dd-email" class="text-sm text-gray-800 font-semibold truncate mt-0.5"></p>
+          </div>
+          <button onclick="closeDropdown('user-dd');scrollToHistory()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 5 12 12 16 14"/><circle cx="12" cy="12" r="10"/></svg>
+            Meu Histórico
+          </button>
+          <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sair
+          </button>
+        </div>
+        <div id="user-ov" class="hidden fixed inset-0 z-40" onclick="closeDropdown('user-dd','user-ov')"></div>
+      </div>
+      <!-- Menu burger -->
+      <button onclick="toggleDropdown('lang-dd','lang-ov')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors hidden">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
     </div>
@@ -99,484 +139,436 @@
           Padrão (203dpi)
         </button>
         <button id="fmt-nitidez" onclick="setFormat('Nitidez+')"
-          class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 bg-white text-gray-500 font-medium transition-all hover:border-green-400 hover:text-green-600">
+          class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all">
           Nitidez+ (300dpi)
         </button>
       </div>
-      <button onclick="event.stopPropagation(); document.getElementById('file-input').click()"
-              class="mt-4 flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span id="select-files-text">Selecionar Arquivos</span>
-      </button>
-      <input type="file" id="file-input" multiple accept=".txt,.zpl,.zip" class="hidden" onchange="handleFileSelect(event)" />
+      <input type="file" id="file-input" multiple accept=".txt,.zpl,.zip" class="hidden" onchange="handleFileInput(event)" />
     </div>
 
-    <!-- ---- HISTORY PANEL ---- -->
-    <div class="bg-white rounded-2xl border border-gray-200 flex flex-col overflow-hidden">
-
-      <!-- Header -->
-      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          <span id="history-title" class="font-semibold text-gray-800 text-sm">Histórico de Processamento</span>
+    <!-- ---- PREVIEW PANEL ---- -->
+    <div id="preview-panel" class="bg-white rounded-2xl border border-gray-200 p-5 min-h-[220px] flex flex-col">
+      <div id="preview-empty" class="flex-1 flex flex-col items-center justify-center text-gray-400">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-2 opacity-40"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        <p id="preview-empty-text" class="text-sm">Pré-visualização aparecerá aqui</p>
+      </div>
+      <div id="preview-content" class="hidden flex-1 flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <span id="preview-title" class="text-sm font-semibold text-gray-800 truncate max-w-[200px]"></span>
+          <div class="flex items-center gap-2">
+            <span id="preview-page-info" class="text-xs text-gray-400"></span>
+            <button onclick="prevPreview()" class="p-1 hover:bg-gray-100 rounded transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button onclick="nextPreview()" class="p-1 hover:bg-gray-100 rounded transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
         </div>
-        <span id="total-count" class="text-xs text-gray-400">Total: 0 registros</span>
-      </div>
-
-      <!-- Summary -->
-      <div class="px-4 py-2 bg-gray-50 border-b border-gray-100 flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-        <span class="flex items-center gap-1.5 font-medium text-gray-700">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
-          <span id="summary-label">Resumo</span>
-        </span>
-        <span class="flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          <strong id="total-labels" class="text-gray-700">0</strong> <span id="lbl-etiquetas">etiquetas</span>
-        </span>
-        <span class="text-gray-300">•</span>
-        <span class="flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <strong id="total-conversions" class="text-gray-700">0</strong> <span id="lbl-conversoes">conversões</span>
-        </span>
-      </div>
-
-      <!-- Filters -->
-      <div class="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2 flex-wrap">
-        <div class="relative flex-1 min-w-[120px]">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="search-input" oninput="handleSearch(this.value)"
-                 placeholder="Buscar..."
-                 class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 bg-white" />
+        <div class="flex-1 flex items-center justify-center overflow-hidden bg-gray-50 rounded-xl" style="min-height:160px;">
+          <img id="preview-img" src="" alt="Preview" class="max-h-full max-w-full object-contain rounded" style="max-height:260px;" />
         </div>
-        <select onchange="handleDateFilter(this.value)" id="date-filter"
-                class="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-green-500 bg-white min-w-[120px]">
-          <option value="all" id="opt-all-dates">Todas as datas</option>
-          <option value="today" id="opt-today">Hoje</option>
-          <option value="7d"   id="opt-7d">Últimos 7 dias</option>
-          <option value="30d"  id="opt-30d">Últimos 30 dias</option>
-        </select>
-        <select onchange="handleTypeFilter(this.value)" id="type-filter"
-                class="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-green-500 bg-white min-w-[120px]">
-          <option value="all" id="opt-all-types">Todos os tipos</option>
-          <option value="Padrão">Padrão</option>
-          <option value="Nitidez+">Nitidez+</option>
-        </select>
       </div>
-
-      <!-- Table -->
-      <div class="overflow-auto flex-1" style="max-height:340px">
-        <table class="w-full text-xs border-collapse">
-          <thead class="sticky top-0 bg-gray-50 z-10">
-            <tr class="text-left text-gray-500 font-medium">
-              <th class="w-8 px-3 py-2.5"></th>
-              <th class="px-3 py-2.5 whitespace-nowrap" id="col-date">Data</th>
-              <th class="px-3 py-2.5 whitespace-nowrap" id="col-qty">Quantidade de Etiquetas</th>
-              <th class="px-3 py-2.5 whitespace-nowrap" id="col-format">Formato de Impressão</th>
-              <th class="px-3 py-2.5 whitespace-nowrap" id="col-time">Processando...</th>
-              <th class="px-3 py-2.5 whitespace-nowrap" id="col-status">Status</th>
-              <th class="px-3 py-2.5"></th>
-            </tr>
-          </thead>
-          <tbody id="history-tbody">
-            <tr><td colspan="7" class="text-center py-12 text-gray-300 text-xs" id="empty-row">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-2 text-gray-200"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              Carregando histórico...
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Auto-delete note -->
-      <div class="px-4 py-1.5 border-t border-gray-50 text-xs text-gray-400 text-center" id="auto-delete-note">
-        Registros e arquivos com mais de 60 dias são excluídos automaticamente.
-      </div>
-
-      <!-- Pagination -->
-      <div id="pagination" class="hidden px-4 py-2.5 border-t border-gray-100 flex items-center justify-center gap-1 flex-wrap"></div>
     </div>
+  </div>
 
-  </div><!-- /grid -->
+  <!-- ---- PROGRESS BAR ---- -->
+  <div id="progress-bar-wrap" class="hidden mt-4 bg-white rounded-xl border border-gray-200 px-4 py-3">
+    <div class="flex items-center justify-between mb-1.5">
+      <span id="progress-label" class="text-xs text-gray-600 font-medium"></span>
+      <span id="progress-pct" class="text-xs text-gray-400"></span>
+    </div>
+    <div class="w-full bg-gray-100 rounded-full h-2">
+      <div id="progress-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- ---- HISTORY TABLE ---- -->
+  <div id="history-section" class="mt-6 hidden">
+    <div class="flex items-center justify-between mb-3">
+      <h2 id="history-title" class="text-sm font-semibold text-gray-800">Histórico de Conversões</h2>
+      <div class="flex gap-2">
+        <button onclick="clearHistory()" class="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          Limpar
+        </button>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50">
+            <th id="th-file" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Arquivo</th>
+            <th id="th-labels" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Etiquetas</th>
+            <th id="th-format" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Formato</th>
+            <th id="th-time" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Tempo</th>
+            <th id="th-status" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+            <th class="px-4 py-2.5"></th>
+          </tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </div>
+  </div>
 </main>
 
-<!-- ======================== PROCESSING OVERLAY ======================== -->
-<div id="processing-overlay" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-  <div class="bg-white rounded-2xl p-7 flex flex-col items-center gap-3 shadow-2xl min-w-[200px]">
-    <svg class="spin text-green-600" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-    <p class="text-sm font-medium text-gray-700" id="proc-msg">Convertendo etiquetas...</p>
-    <p class="text-xs text-gray-400" id="proc-sub"></p>
-  </div>
-</div>
-
-<!-- ======================== PDF VIEWER MODAL ======================== -->
-<div id="pdf-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="handleModalBgClick(event,'pdf-modal')">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
-    <!-- Modal header -->
-    <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between shrink-0">
-      <span id="pdf-modal-title" class="font-semibold text-gray-800">Visualizar PDF</span>
-      <div class="flex items-center gap-2">
-        <button onclick="downloadCurrentPDF()" class="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span id="dl-btn-text">Baixar</span>
-        </button>
-        <button onclick="closeModal('pdf-modal')" class="p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 rounded-lg transition-colors">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
+<!-- ======================== AUTH MODAL ======================== -->
+<div id="auth-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <button onclick="hideModal('auth-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="mb-5 text-center">
+      <span class="text-xl font-bold text-gray-900">ZPL Easy</span>
+      <p class="text-gray-500 text-sm mt-1">Salve seu histórico na nuvem</p>
     </div>
-    <!-- PDF pages (canvas/images rendered here) -->
-    <div id="pdf-inner" class="flex-1 overflow-auto bg-gray-700 p-4 flex flex-col items-center gap-3">
-      <!-- filled dynamically -->
+    <!-- Tabs -->
+    <div class="flex gap-0 border-b border-gray-200 mb-5">
+      <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 pb-2.5 text-sm auth-tab-active">Entrar</button>
+      <button id="tab-register" onclick="switchAuthTab('register')" class="flex-1 pb-2.5 text-sm auth-tab">Criar conta</button>
     </div>
-  </div>
-</div>
-
-<!-- ======================== FEEDBACK MODAL ======================== -->
-<div id="feedback-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="handleModalBgClick(event,'feedback-modal')">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-    <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
-      <span class="font-semibold text-gray-800">Enviar Feedback</span>
-      <button onclick="closeModal('feedback-modal')" class="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+    <!-- Login form -->
+    <div id="form-login">
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label>
+        <input id="login-email" type="email" placeholder="seu@email.com" class="input-field" autocomplete="email" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Senha</label>
+        <input id="login-password" type="password" placeholder="••••••••" class="input-field" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <p id="login-error" class="text-red-500 text-xs mb-3 hidden"></p>
+      <button onclick="doLogin()" id="btn-login" class="btn-green">Entrar</button>
+      <p class="text-center text-xs text-gray-400 mt-3">Não tem conta? <button onclick="switchAuthTab('register')" class="text-green-600 font-medium hover:underline">Criar agora</button></p>
     </div>
-    <div class="p-5 flex flex-col gap-3">
-      <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
-        <select id="feedback-type" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500 bg-white">
-          <option>Sugestão</option>
-          <option>Bug / Erro</option>
-          <option>Outro</option>
-        </select>
+    <!-- Register form -->
+    <div id="form-register" class="hidden">
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label>
+        <input id="reg-email" type="email" placeholder="seu@email.com" class="input-field" autocomplete="email" />
       </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Mensagem</label>
-        <textarea id="feedback-msg" rows="4" placeholder="Descreva seu feedback..."
-                  class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"></textarea>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Senha</label>
+        <input id="reg-password" type="password" placeholder="Mínimo 6 caracteres" class="input-field" autocomplete="new-password" />
       </div>
-      <button onclick="submitFeedback()" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2.5 rounded-xl font-semibold transition-colors">Enviar</button>
+      <div class="mb-4">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Confirmar senha</label>
+        <input id="reg-confirm" type="password" placeholder="Repita a senha" class="input-field" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" />
+      </div>
+      <p id="reg-error" class="text-red-500 text-xs mb-3 hidden"></p>
+      <p id="reg-success" class="text-green-600 text-xs mb-3 hidden"></p>
+      <button onclick="doRegister()" id="btn-register" class="btn-green">Criar conta</button>
+      <p class="text-center text-xs text-gray-400 mt-3">Já tem conta? <button onclick="switchAuthTab('login')" class="text-green-600 font-medium hover:underline">Entrar</button></p>
     </div>
   </div>
 </div>
 
 <!-- ======================== PIX MODAL ======================== -->
-<div id="pix-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="handleModalBgClick(event,'pix-modal')">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs text-center">
-    <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
-      <span class="font-semibold text-gray-800">Apoie o projeto! 💚</span>
-      <button onclick="closeModal('pix-modal')" class="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+<div id="pix-modal" class="modal-overlay hidden">
+  <div class="modal-box max-w-sm text-center">
+    <button onclick="hideModal('pix-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="#dc2626"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
     </div>
-    <div class="p-6">
-      <p class="text-sm text-gray-600 mb-4">Contribua via PIX</p>
-      <div class="w-44 h-44 bg-gray-100 mx-auto rounded-xl flex flex-col items-center justify-center gap-2">
-        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5">
-          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
-          <rect x="5" y="5" width="3" height="3" fill="#9ca3af" stroke="none"/><rect x="16" y="5" width="3" height="3" fill="#9ca3af" stroke="none"/><rect x="5" y="16" width="3" height="3" fill="#9ca3af" stroke="none"/>
-          <line x1="14" y1="14" x2="21" y2="14"/><line x1="14" y1="17" x2="17" y2="17"/><line x1="17" y1="20" x2="21" y2="20"/><line x1="21" y1="17" x2="21" y2="20"/>
-        </svg>
-        <span class="text-xs text-gray-400">QR Code PIX</span>
-      </div>
-      <p class="text-xs text-gray-400 mt-3">Escaneie com a câmera do app do seu banco</p>
-      <p class="text-xs text-gray-400 mt-1">Outras formas de doar</p>
+    <h3 class="text-lg font-bold text-gray-900 mb-1">Apoiar o ZPL Easy</h3>
+    <p id="pix-desc" class="text-sm text-gray-500 mb-4">Esta ferramenta é gratuita e mantida com muito carinho. Se ela te ajudou, considere fazer uma contribuição via PIX:</p>
+    <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-4">
+      <p class="text-xs text-gray-400 mb-1" id="pix-key-label">Chave PIX (e-mail)</p>
+      <p class="font-mono text-sm font-semibold text-gray-800 select-all">exemplo@email.com</p>
     </div>
+    <button onclick="hideModal('pix-modal')" class="btn-green">Fechar</button>
   </div>
 </div>
 
-<!-- ======================== USER MENU PANEL ======================== -->
-<div id="user-menu-overlay" class="hidden fixed inset-0 z-40 bg-transparent" onclick="closeUserMenu()"></div>
-<div id="user-menu" class="hidden fixed right-0 top-0 h-full w-72 bg-white shadow-2xl z-50 flex flex-col transition-transform">
-  <!-- Header -->
-  <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-    <span class="font-semibold text-gray-800">Menu do Usuário</span>
-    <button onclick="closeUserMenu()" class="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-  <!-- User info -->
-  <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    </div>
-    <div class="min-w-0">
-      <p id="menu-username" class="text-sm font-medium text-gray-900 truncate">Usuário Local</p>
-      <p id="menu-email" class="text-xs text-gray-500 truncate">usuario@local.com</p>
-    </div>
-  </div>
-  <!-- Links -->
-  <div class="flex-1 px-3 py-2">
-    <button onclick="closeUserMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Início
-    </button>
-    <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Sair
-    </button>
-  </div>
-  <!-- Delete account -->
-  <div class="px-3 py-3 border-t border-gray-100">
-    <button onclick="handleDeleteAccount()" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors font-medium">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-      Excluir Conta
-    </button>
+<!-- ======================== FEEDBACK MODAL ======================== -->
+<div id="feedback-modal" class="modal-overlay hidden">
+  <div class="modal-box max-w-sm">
+    <button onclick="hideModal('feedback-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3 class="text-lg font-bold text-gray-900 mb-1">Feedback</h3>
+    <p id="feedback-desc" class="text-sm text-gray-500 mb-3">Sua opinião nos ajuda a melhorar o ZPL Easy.</p>
+    <textarea id="feedback-text" rows="4" placeholder="Descreva sua experiência, problemas ou sugestões..." class="input-field resize-none mb-3"></textarea>
+    <button onclick="submitFeedback()" class="btn-green">Enviar</button>
   </div>
 </div>
 
-<!-- ======================== DROPDOWN OVERLAY ======================== -->
-<div id="lang-ov" class="hidden fixed inset-0 z-40" onclick="toggleDropdown('lang-dd','lang-ov')"></div>
+<!-- ======================== TOAST ======================== -->
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+  <div id="toast-inner" class="hidden bg-gray-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-lg max-w-xs text-center"></div>
+</div>
 
-<!-- ======================== JAVASCRIPT ======================== -->
 <script>
-// ================================================================
-// STATE
-// ================================================================
+// ====== SUPABASE INIT ======
+const SUPABASE_URL = 'https://tjkuwbgqjlpoztwcetid.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqa3V3Ymdxamxwb3p0d2NldGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjY2NTgsImV4cCI6MjA4ODg0MjY1OH0.WodidW0F3AmkS-KJR610d6o9XP2c_WVJN2G4fxd5tFI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ====== APP STATE ======
 const APP = {
-  history: [],
-  filtered: [],
-  page: 1,
-  perPage: 8,
-  dateFilter: 'all',
-  selectedFormat: 'Padrão',
-  typeFilter: 'all',
-  search: '',
   lang: 'pt',
-  currentViewId: null,
-};
-const pdfStore = {}; // id -> { blob, url }
-const HIST_KEY = 'zpl_easy_v2_history';
-const ZPL_KEY  = 'zpl_easy_v2_zpl';
-
-// ================================================================
-// I18N
-// ================================================================
-const T = {
-  pt: {
-    beta: '⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.',
-    uploadLabel: 'Carregue seus arquivos ZPL para convertê-los para o formato PDF',
-    dropMain: 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)',
-    formats: 'Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL',
-    selectFiles: 'Selecionar Arquivos',
-    histTitle: 'Histórico de Processamento',
-    summary: 'Resumo',
-    etiquetas: 'etiquetas',
-    conversoes: 'conversões',
-    allDates: 'Todas as datas',
-    today: 'Hoje',
-    last7: 'Últimos 7 dias',
-    last30: 'Últimos 30 dias',
-    allTypes: 'Todos os tipos',
-    colDate: 'Data',
-    colQty: 'Quantidade de Etiquetas',
-    colFmt: 'Formato de Impressão',
-    colTime: 'Processando...',
-    colStatus: 'Status',
-    autoDelete: 'Registros e arquivos com mais de 60 dias são excluídos automaticamente.',
-    noRecords: 'Nenhum registro encontrado',
-    prev: 'Anterior',
-    next: 'Próximo',
-    viewPDF: 'Visualizar PDF',
-    download: 'Baixar',
-    ready: 'Pronto',
-    error: 'Erro',
-    processing: 'Processando...',
-    convertingLabel: (i,n) => `Convertendo etiqueta ${i} de ${n}...`,
-    generatingPDF: 'Gerando PDF...',
-    totalReg: (n) => `Total: ${n} registros`,
-  },
-  en: {
-    beta: '⚙️ This tool is in BETA and DEVELOPMENT phase. For issues or suggestions, use the Feedback button.',
-    uploadLabel: 'Upload your ZPL files to convert them to PDF format',
-    dropMain: 'Drag and drop your files here (multiple files supported)',
-    formats: 'Accepted formats: .txt, .zpl or .zip with ZPL files',
-    selectFiles: 'Select Files',
-    histTitle: 'Processing History',
-    summary: 'Summary',
-    etiquetas: 'labels',
-    conversoes: 'conversions',
-    allDates: 'All dates',
-    today: 'Today',
-    last7: 'Last 7 days',
-    last30: 'Last 30 days',
-    allTypes: 'All types',
-    colDate: 'Date',
-    colQty: 'Label Count',
-    colFmt: 'Print Format',
-    colTime: 'Processing...',
-    colStatus: 'Status',
-    autoDelete: 'Records and files older than 60 days are automatically deleted.',
-    noRecords: 'No records found',
-    prev: 'Previous',
-    next: 'Next',
-    viewPDF: 'View PDF',
-    download: 'Download',
-    ready: 'Ready',
-    error: 'Error',
-    processing: 'Processing...',
-    convertingLabel: (i,n) => `Converting label ${i} of ${n}...`,
-    generatingPDF: 'Generating PDF...',
-    totalReg: (n) => `Total: ${n} records`,
-  }
+  history: [],
+  previewImgs: [],
+  previewIdx: 0,
+  currentFile: null,
+  selectedFormat: 'Padrão',
+  user: null,
+  pendingPdfBlobs: {} // convId -> pdfBlob for upload
 };
 
-function t(k, ...args) {
-  const v = T[APP.lang][k];
-  return typeof v === 'function' ? v(...args) : (v || k);
-}
-
-function applyTranslations() {
-  const l = APP.lang;
-  document.getElementById('beta-text').textContent = t('beta');
-  document.getElementById('upload-label-text').textContent = t('uploadLabel');
-  document.getElementById('drop-main-text').textContent = t('dropMain');
-  document.getElementById('formats-text').textContent = t('formats');
-  document.getElementById('select-files-text').textContent = t('selectFiles');
-  document.getElementById('history-title').textContent = t('histTitle');
-  document.getElementById('summary-label').textContent = t('summary');
-  document.getElementById('lbl-etiquetas').textContent = t('etiquetas');
-  document.getElementById('lbl-conversoes').textContent = t('conversoes');
-  document.getElementById('opt-all-dates').textContent = t('allDates');
-  document.getElementById('opt-today').textContent = t('today');
-  document.getElementById('opt-7d').textContent = t('last7');
-  document.getElementById('opt-30d').textContent = t('last30');
-  document.getElementById('opt-all-types').textContent = t('allTypes');
-  document.getElementById('col-date').textContent = t('colDate');
-  document.getElementById('col-qty').textContent = t('colQty');
-  document.getElementById('col-format').textContent = t('colFmt');
-  document.getElementById('col-time').textContent = t('colTime');
-  document.getElementById('col-status').textContent = t('colStatus');
-  document.getElementById('auto-delete-note').textContent = t('autoDelete');
-  document.getElementById('pdf-modal-title').textContent = t('viewPDF');
-  document.getElementById('dl-btn-text').textContent = t('download');
-  document.getElementById('check-pt').classList.toggle('hidden', l !== 'pt');
-  document.getElementById('check-en').classList.toggle('hidden', l !== 'en');
-  document.documentElement.lang = l === 'pt' ? 'pt-BR' : 'en';
-  renderHistory();
-  renderSummary();
-}
-
-// ================================================================
-// LOCAL STORAGE
-// ================================================================
-function loadHistory() {
-  try {
-    const raw = localStorage.getItem(HIST_KEY);
-    APP.history = raw ? JSON.parse(raw) : [];
-    const cutoff = Date.now() - 60 * 86400000;
-    APP.history = APP.history.filter(r => new Date(r.date).getTime() > cutoff);
-    saveHistory();
-  } catch(e) { APP.history = []; }
-}
-
-function saveHistory() {
-  try { localStorage.setItem(HIST_KEY, JSON.stringify(APP.history)); } catch(e) {}
-}
-
-function saveZPL(id, zpl) {
-  try {
-    const d = JSON.parse(localStorage.getItem(ZPL_KEY) || '{}');
-    d[id] = zpl;
-    localStorage.setItem(ZPL_KEY, JSON.stringify(d));
-  } catch(e) {}
-}
-
-function getZPL(id) {
-  try {
-    const d = JSON.parse(localStorage.getItem(ZPL_KEY) || '{}');
-    return d[id] || null;
-  } catch(e) { return null; }
-}
-
-function deleteZPL(id) {
-  try {
-    const d = JSON.parse(localStorage.getItem(ZPL_KEY) || '{}');
-    delete d[id];
-    localStorage.setItem(ZPL_KEY, JSON.stringify(d));
-  } catch(e) {}
-}
-
-// ================================================================
-// FILE HANDLING
-// ================================================================
-function handleDragOver(e) {
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.add('drop-active');
-}
-function handleDragLeave(e) {
-  document.getElementById('drop-zone').classList.remove('drop-active');
-}
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.remove('drop-active');
-  processFiles(Array.from(e.dataTransfer.files));
-}
-function handleFileSelect(e) {
-  processFiles(Array.from(e.target.files));
-  e.target.value = '';
-}
-
-function setFormat(fmt) {
-  APP.selectedFormat = fmt;
-  const isPadrao = fmt === 'Padrão';
-  document.getElementById('fmt-padrao').className = isPadrao
-    ? 'px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all'
-    : 'px-3 py-1.5 text-xs rounded-lg border border-gray-300 bg-white text-gray-500 font-medium transition-all hover:border-green-400 hover:text-green-600';
-  document.getElementById('fmt-nitidez').className = !isPadrao
-    ? 'px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all'
-    : 'px-3 py-1.5 text-xs rounded-lg border border-gray-300 bg-white text-gray-500 font-medium transition-all hover:border-green-400 hover:text-green-600';
-}
-
-async function processFiles(files) {
-  const valid = files.filter(f => /\.(zpl|txt|zip)$/i.test(f.name));
-  if (!valid.length) { alert('Nenhum arquivo válido. Use .txt, .zpl ou .zip'); return; }
-
-  const allZPL = [];
-  for (const f of valid) {
-    const zpl = await readFileZPL(f);
-    if (zpl) allZPL.push(...zpl);
+// ====== AUTH INIT ======
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    APP.user = session.user;
+    updateNavAuth();
+    await loadHistory();
   }
-  if (!allZPL.length) { alert('Nenhum conteúdo ZPL encontrado nos arquivos.'); return; }
 
-  const combined = allZPL.join('\n');
-  const fname = valid.map(f => f.name).join(', ');
-  await convertAndSave(combined, APP.selectedFormat || 'Padrão', fname);
-}
-
-async function readFileZPL(file) {
-  if (/\.zip$/i.test(file.name)) {
-    const zip = await JSZip.loadAsync(file);
-    const results = [];
-    for (const [name, entry] of Object.entries(zip.files)) {
-      if (/\.(zpl|txt)$/i.test(name) && !entry.dir) {
-        results.push(await entry.async('text'));
-      }
+  sb.auth.onAuthStateChange(async (event, session) => {
+    APP.user = session ? session.user : null;
+    updateNavAuth();
+    if (APP.user) {
+      await loadHistory();
+    } else {
+      APP.history = [];
+      renderHistory();
     }
-    return results;
-  }
-  return [await file.text()];
+  });
 }
 
-// ================================================================
-// ZPL HELPERS
-// ================================================================
+function updateNavAuth() {
+  const loginBtn = document.getElementById('nav-login-btn');
+  const userBtn = document.getElementById('nav-user-btn');
+  const avatar = document.getElementById('nav-avatar');
+  const emailShort = document.getElementById('nav-email-short');
+  const ddEmail = document.getElementById('dd-email');
+
+  if (APP.user) {
+    loginBtn.classList.add('hidden');
+    userBtn.classList.remove('hidden');
+    userBtn.classList.add('flex');
+    const email = APP.user.email || '';
+    const initials = email.substring(0, 2).toUpperCase();
+    if (avatar) avatar.textContent = initials;
+    if (emailShort) emailShort.textContent = email;
+    if (ddEmail) ddEmail.textContent = email;
+  } else {
+    loginBtn.classList.remove('hidden');
+    userBtn.classList.add('hidden');
+    userBtn.classList.remove('flex');
+  }
+}
+
+async function handleLogout() {
+  closeDropdown('user-dd', 'user-ov');
+  await sb.auth.signOut();
+  showToast(APP.lang === 'pt' ? 'Sessão encerrada' : 'Signed out');
+}
+
+function openAuthModal(tab) {
+  switchAuthTab(tab || 'login');
+  showModal('auth-modal');
+}
+
+function switchAuthTab(tab) {
+  const tabs = ['login', 'register'];
+  tabs.forEach(t => {
+    document.getElementById('tab-' + t).className = 'flex-1 pb-2.5 text-sm ' + (t === tab ? 'auth-tab-active' : 'auth-tab');
+    document.getElementById('form-' + t).classList.toggle('hidden', t !== tab);
+  });
+  // Clear errors
+  ['login-error','reg-error','reg-success'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = ''; el.classList.add('hidden'); }
+  });
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('btn-login');
+  errEl.classList.add('hidden');
+
+  if (!email || !password) {
+    errEl.textContent = APP.lang === 'pt' ? 'Preencha todos os campos.' : 'Fill all fields.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = APP.lang === 'pt' ? 'Entrando...' : 'Signing in...';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false;
+  btn.textContent = APP.lang === 'pt' ? 'Entrar' : 'Sign in';
+
+  if (error) {
+    errEl.textContent = APP.lang === 'pt'
+      ? 'E-mail ou senha incorretos.'
+      : 'Incorrect email or password.';
+    errEl.classList.remove('hidden');
+  } else {
+    hideModal('auth-modal');
+    showToast(APP.lang === 'pt' ? 'Bem-vindo! ✓' : 'Welcome! ✓');
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const confirm = document.getElementById('reg-confirm').value;
+  const errEl = document.getElementById('reg-error');
+  const succEl = document.getElementById('reg-success');
+  const btn = document.getElementById('btn-register');
+  errEl.classList.add('hidden');
+  succEl.classList.add('hidden');
+
+  if (!email || !password || !confirm) {
+    errEl.textContent = APP.lang === 'pt' ? 'Preencha todos os campos.' : 'Fill all fields.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (password.length < 6) {
+    errEl.textContent = APP.lang === 'pt' ? 'Senha deve ter no mínimo 6 caracteres.' : 'Password must be at least 6 characters.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (password !== confirm) {
+    errEl.textContent = APP.lang === 'pt' ? 'As senhas não coincidem.' : 'Passwords do not match.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = APP.lang === 'pt' ? 'Criando conta...' : 'Creating account...';
+
+  const { data, error } = await sb.auth.signUp({ email, password });
+
+  btn.disabled = false;
+  btn.textContent = APP.lang === 'pt' ? 'Criar conta' : 'Create account';
+
+  if (error) {
+    errEl.textContent = error.message || (APP.lang === 'pt' ? 'Erro ao criar conta.' : 'Error creating account.');
+    errEl.classList.remove('hidden');
+  } else {
+    // Check if auto-confirmed or needs email confirmation
+    if (data.user && data.session) {
+      hideModal('auth-modal');
+      showToast(APP.lang === 'pt' ? 'Conta criada! Bem-vindo ✓' : 'Account created! Welcome ✓');
+    } else {
+      succEl.textContent = APP.lang === 'pt'
+        ? 'Conta criada! Verifique seu e-mail para confirmar.'
+        : 'Account created! Check your email to confirm.';
+      succEl.classList.remove('hidden');
+    }
+  }
+}
+
+// ====== SUPABASE HISTORY ======
+async function loadHistory() {
+  if (!APP.user) return;
+  const { data, error } = await sb
+    .from('conversions')
+    .select('*')
+    .eq('user_id', APP.user.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) { console.warn('loadHistory error', error); return; }
+  APP.history = (data || []).map(row => ({
+    id: row.id,
+    filename: row.filename,
+    labelCount: row.label_count,
+    format: row.format,
+    time: row.processing_time,
+    status: row.status,
+    error: row.error_msg,
+    cloudPdf: true, // fetched from cloud
+    createdAt: row.created_at,
+    zpl: row.zpl_content
+  }));
+  renderHistory();
+}
+
+async function saveConversionToCloud(item, pdfBlob) {
+  if (!APP.user) return null;
+
+  const { data: row, error: insertErr } = await sb.from('conversions').insert({
+    user_id: APP.user.id,
+    filename: item.filename,
+    label_count: item.labelCount,
+    format: item.format,
+    processing_time: item.time,
+    status: item.status,
+    error_msg: item.error || null,
+    zpl_content: item.zpl ? item.zpl.substring(0, 50000) : null // cap at 50k chars
+  }).select().single();
+
+  if (insertErr) { console.warn('insert error', insertErr); return null; }
+
+  if (pdfBlob && row) {
+    const path = `${APP.user.id}/${row.id}.pdf`;
+    const { error: uploadErr } = await sb.storage.from('pdfs').upload(path, pdfBlob, {
+      contentType: 'application/pdf',
+      upsert: true
+    });
+    if (uploadErr) console.warn('pdf upload error', uploadErr);
+  }
+
+  return row ? row.id : null;
+}
+
+async function deleteCloudConversion(id) {
+  if (!APP.user) return;
+  // Delete PDF from storage
+  const path = `${APP.user.id}/${id}.pdf`;
+  await sb.storage.from('pdfs').remove([path]);
+  // Delete record
+  await sb.from('conversions').delete().eq('id', id).eq('user_id', APP.user.id);
+}
+
+async function downloadCloudPdf(id, filename) {
+  if (!APP.user) return;
+  const path = `${APP.user.id}/${id}.pdf`;
+  const { data, error } = await sb.storage.from('pdfs').download(path);
+  if (error || !data) {
+    showToast(APP.lang === 'pt' ? 'PDF não disponível.' : 'PDF not available.');
+    return;
+  }
+  const url = URL.createObjectURL(data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (filename || 'etiqueta') + '.pdf';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// ====== HISTORY LOCAL (fallback when not logged in) ======
+function loadLocalHistory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('zpl_history') || '[]');
+    APP.history = saved;
+    renderHistory();
+  } catch(e) {
+    APP.history = [];
+  }
+}
+
+function saveLocalHistory() {
+  const safe = APP.history.slice(0, 50).map(h => ({...h, pdf: undefined, previewBlobs: undefined}));
+  try { localStorage.setItem('zpl_history', JSON.stringify(safe)); } catch(e) {}
+}
+
+// ====== ZPL PROCESSING ======
 function isPrintableLabel(block) {
-  // Strip structural tags and whitespace, check if anything printable remains
   const inner = block.replace(/\^XA|\^XZ|\^FS/gi, '').replace(/\s+/g, '');
-  // ^IDR/^IDD/^IDN = delete/recall graphic commands only → skip
   if (/^\^ID[RDFN]/i.test(inner)) return false;
-  // Empty or trivially short
+  if (/^\^ID/.test(inner) && inner.length < 20) return false;
   if (inner.length < 4) return false;
   return true;
 }
 
-function countLabels(zpl) {
-  const m = zpl.match(/\^XA[\s\S]*?\^XZ/gi);
-  if (!m) return zpl.trim() ? 1 : 0;
-  const printable = m.filter(isPrintableLabel);
-  return printable.length || (zpl.trim() ? 1 : 0);
-}
-
-// Returns the indices of printable labels (skipping cleanup-only ones)
 function getPrintableLabelIndices(zpl) {
   const m = zpl.match(/\^XA[\s\S]*?\^XZ/gi);
   if (!m) return [0];
@@ -585,9 +577,6 @@ function getPrintableLabelIndices(zpl) {
   return indices.length ? indices : [0];
 }
 
-// ================================================================
-// LABELARY API
-// ================================================================
 async function fetchLabel(zpl, index, dpmm, w, h, retry) {
   retry = retry || 0;
   const url = `https://api.labelary.com/v1/printers/${dpmm}/labels/${w}x${h}/${index}/`;
@@ -603,15 +592,15 @@ async function fetchLabel(zpl, index, dpmm, w, h, retry) {
       await new Promise(r => setTimeout(r, 800));
       return fetchLabel(zpl, index, dpmm, w, h, retry + 1);
     }
-    throw new Error('Falha de rede ao conectar com a API Labelary. Verifique sua conexão.');
+    throw new Error('Falha de rede ao conectar com a API Labelary.');
   }
-  if (res.status === 404) return null; // label index doesn't exist, skip silently
+  if (res.status === 404) return null;
   if (res.status === 429) {
     if (retry < 3) {
       await new Promise(r => setTimeout(r, 1200 * (retry + 1)));
       return fetchLabel(zpl, index, dpmm, w, h, retry + 1);
     }
-    throw new Error('Limite de requisições da API Labelary atingido. Aguarde alguns segundos e tente novamente.');
+    throw new Error('Limite de requisições da API Labelary atingido.');
   }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -622,381 +611,443 @@ async function fetchLabel(zpl, index, dpmm, w, h, retry) {
   return blob;
 }
 
-// ================================================================
-// CONVERSION
-// ================================================================
-async function convertAndSave(zpl, format, filename) {
-  const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-  const t0 = Date.now();
-  showProc(true);
-
-  try {
-    const labelIndices = getPrintableLabelIndices(zpl);
-    const total = labelIndices.length;
-    const dpmm = format === 'Nitidez+' ? '12dpmm' : '8dpmm';
-    const imgs = [];
-
-    for (let i = 0; i < total; i++) {
-      document.getElementById('proc-msg').textContent = t('convertingLabel', i+1, total);
-      document.getElementById('proc-sub').textContent = '';
-      const blob = await fetchLabel(zpl, labelIndices[i], dpmm, 4, 6);
-      if (blob) imgs.push(blob);
-    }
-
-    if (!imgs.length) {
-      throw new Error('A API Labelary não conseguiu gerar nenhuma imagem. Verifique se o arquivo ZPL é válido.');
-    }
-
-    document.getElementById('proc-msg').textContent = t('generatingPDF');
-    const pdf = await buildPDF(imgs);
-    storePDF(id, pdf);
-
-    const ms = (Date.now() - t0) / 1000;
-    const rec = { id, date: new Date().toISOString(), labelCount: imgs.length, format, processingTime: +ms.toFixed(1), status: 'Pronto', filename };
-    APP.history.unshift(rec);
-    saveHistory();
-    saveZPL(id, zpl);
-
-  } catch(err) {
-    const ms = (Date.now() - t0) / 1000;
-    let msg = err.message;
-    if (err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('cors') || err.message.toLowerCase().includes('failed')) {
-      msg = 'Erro de rede. Tente servir o arquivo via servidor local (ex: python3 -m http.server).';
-    }
-    const rec = { id, date: new Date().toISOString(), labelCount: 0, format, processingTime: +ms.toFixed(1), status: 'Erro', filename, error: msg };
-    APP.history.unshift(rec);
-    saveHistory();
-  }
-
-  showProc(false);
-  applyFilters();
-  renderHistory();
-  renderSummary();
-}
-
-// ================================================================
-// PDF GENERATION
-// ================================================================
-async function buildPDF(imageBlobs) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'in', format: [4, 6], orientation: 'portrait' });
-  for (let i = 0; i < imageBlobs.length; i++) {
-    if (i > 0) doc.addPage([4, 6], 'portrait');
-    const dataUrl = await blobToDataURL(imageBlobs[i]);
-    doc.addImage(dataUrl, 'PNG', 0, 0, 4, 6);
-  }
-  return doc.output('blob');
-}
-
-function blobToDataURL(blob) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result);
-    r.onerror = rej;
-    r.readAsDataURL(blob);
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
   });
 }
 
-function storePDF(id, blob) {
-  if (pdfStore[id]) URL.revokeObjectURL(pdfStore[id].url);
-  pdfStore[id] = { blob, url: URL.createObjectURL(blob) };
-}
-
-async function getPDF(id) {
-  if (pdfStore[id]) return pdfStore[id];
-  const zpl = getZPL(id);
-  const rec = APP.history.find(r => r.id === id);
-  if (!zpl || !rec) return null;
-  showProc(true, 'Carregando PDF...');
-  try {
-    const dpmm = rec.format === 'Nitidez+' ? '12dpmm' : '8dpmm';
-    const imgs = [];
-    const labelIndices = getPrintableLabelIndices(zpl);
-    const total = labelIndices.length;
-    for (let i = 0; i < total; i++) {
-      document.getElementById('proc-msg').textContent = t('convertingLabel', i+1, total);
-      const blob = await fetchLabel(zpl, labelIndices[i], dpmm, 4, 6);
-      if (blob) imgs.push(blob);
+async function extractZplFiles(file) {
+  if (file.name.toLowerCase().endsWith('.zip')) {
+    const zip = await JSZip.loadAsync(file);
+    const results = [];
+    for (const name of Object.keys(zip.files)) {
+      const entry = zip.files[name];
+      if (!entry.dir && /\.(zpl|txt)$/i.test(name)) {
+        const content = await entry.async('string');
+        results.push({ name: name.split('/').pop(), content });
+      }
     }
-    document.getElementById('proc-msg').textContent = t('generatingPDF');
-    const pdf = await buildPDF(imgs);
-    storePDF(id, pdf);
-    return pdfStore[id];
-  } catch(e) {
-    alert('Erro ao regenerar PDF: ' + e.message);
-    return null;
-  } finally {
-    showProc(false);
+    return results;
   }
+  const content = await file.text();
+  return [{ name: file.name, content }];
 }
 
-// ================================================================
-// FILTERS & RENDER
-// ================================================================
-function applyFilters() {
-  let f = [...APP.history];
-  if (APP.search) {
-    const q = APP.search.toLowerCase();
-    f = f.filter(r => (r.filename||'').toLowerCase().includes(q) || (r.format||'').toLowerCase().includes(q) || (r.status||'').toLowerCase().includes(q));
+async function processFiles(files) {
+  const fmt = APP.selectedFormat || 'Padrão';
+  const dpmm = fmt === 'Nitidez+' ? 12 : 8;
+
+  showProgressBar(true);
+
+  let allFiles = [];
+  for (const f of files) {
+    const extracted = await extractZplFiles(f);
+    allFiles = allFiles.concat(extracted);
   }
-  if (APP.dateFilter === 'today') {
-    const tod = new Date().toDateString();
-    f = f.filter(r => new Date(r.date).toDateString() === tod);
-  } else if (APP.dateFilter === '7d') {
-    const cut = Date.now() - 7*86400000;
-    f = f.filter(r => new Date(r.date) >= cut);
-  } else if (APP.dateFilter === '30d') {
-    const cut = Date.now() - 30*86400000;
-    f = f.filter(r => new Date(r.date) >= cut);
+
+  const total = allFiles.length;
+
+  for (let fi = 0; fi < total; fi++) {
+    const { name, content } = allFiles[fi];
+    const zpl = content.trim();
+    const start = Date.now();
+
+    updateProgress(name, fi, total);
+    addOrUpdateHistoryItem({ filename: name, labelCount: 0, format: fmt, time: 0, status: 'proc', zpl });
+
+    try {
+      const labelIndices = getPrintableLabelIndices(zpl);
+      const w = 4, h = 6;
+      const imgs = [];
+      const previewBlobs = [];
+
+      for (let i = 0; i < labelIndices.length; i++) {
+        const blob = await fetchLabel(zpl, labelIndices[i], dpmm, w, h);
+        if (blob) {
+          imgs.push(blob);
+          previewBlobs.push(blob);
+        }
+        updateProgress(name, fi * labelIndices.length + i, total * labelIndices.length);
+      }
+
+      if (!imgs.length) throw new Error('A API Labelary não conseguiu gerar nenhuma imagem.');
+
+      // Build PDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'in', format: [4, 6], orientation: 'portrait' });
+
+      for (let i = 0; i < imgs.length; i++) {
+        if (i > 0) doc.addPage([4, 6], 'portrait');
+        const dataUrl = await blobToDataUrl(imgs[i]);
+        doc.addImage(dataUrl, 'PNG', 0, 0, 4, 6);
+      }
+
+      const pdfBlob = doc.output('blob');
+      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+
+      const histItem = {
+        filename: name,
+        labelCount: imgs.length,
+        format: fmt,
+        time: parseFloat(elapsed),
+        status: 'ok',
+        previewBlobs,
+        pdf: pdfBlob,
+        zpl
+      };
+
+      addOrUpdateHistoryItem(histItem);
+
+      // Set preview
+      if (previewBlobs.length) {
+        APP.previewImgs = previewBlobs.map(b => URL.createObjectURL(b));
+        APP.previewIdx = 0;
+        showPreview(name, previewBlobs);
+      }
+
+      // Save to cloud or local
+      if (APP.user) {
+        const cloudId = await saveConversionToCloud(histItem, pdfBlob);
+        if (cloudId) {
+          // Update item with cloud id
+          const idx = APP.history.findIndex(h => h.filename === name && h.status === 'ok');
+          if (idx >= 0) { APP.history[idx].id = cloudId; APP.history[idx].cloudPdf = true; }
+          renderHistory();
+        }
+      } else {
+        saveLocalHistory();
+      }
+
+    } catch(err) {
+      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+      const histItem = {
+        filename: name,
+        labelCount: 0,
+        format: fmt,
+        time: parseFloat(elapsed),
+        status: 'err',
+        error: err.message,
+        zpl
+      };
+      addOrUpdateHistoryItem(histItem);
+
+      if (APP.user) {
+        await saveConversionToCloud(histItem, null);
+      } else {
+        saveLocalHistory();
+      }
+    }
   }
-  if (APP.typeFilter !== 'all') f = f.filter(r => r.format === APP.typeFilter);
-  APP.filtered = f;
-  APP.page = 1;
+
+  showProgressBar(false);
 }
 
-function handleSearch(v) { APP.search = v; applyFilters(); renderHistory(); }
-function handleDateFilter(v) { APP.dateFilter = v; applyFilters(); renderHistory(); }
-function handleTypeFilter(v) { APP.typeFilter = v; applyFilters(); renderHistory(); }
+// ====== HISTORY RENDERING ======
+function addOrUpdateHistoryItem(item) {
+  const existing = APP.history.findIndex(h => h.filename === item.filename && (h.status === 'proc' || h.status === item.status));
+  if (existing >= 0) {
+    APP.history[existing] = { ...APP.history[existing], ...item };
+  } else {
+    APP.history.unshift(item);
+    if (APP.history.length > 100) APP.history.pop();
+  }
+  renderHistory();
+}
 
 function renderHistory() {
-  const tbody = document.getElementById('history-tbody');
-  const { filtered, page, perPage } = APP;
-  document.getElementById('total-count').textContent = t('totalReg', APP.history.length);
+  const section = document.getElementById('history-section');
+  const body = document.getElementById('history-body');
+  if (!APP.history.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  body.innerHTML = '';
 
-  if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-300 text-xs">${t('noRecords')}</td></tr>`;
-    document.getElementById('pagination').classList.add('hidden');
-    return;
-  }
+  APP.history.forEach((item, idx) => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-gray-50 hover:bg-gray-50 transition-colors';
 
-  const slice = filtered.slice((page-1)*perPage, page*perPage);
-  tbody.innerHTML = slice.map(r => {
-    const d = new Date(r.date);
-    const ds = d.toLocaleDateString('pt-BR') + ' ' + d.toTimeString().slice(0,5);
-    const fmtClass = r.format === 'Nitidez+' ? 'fmt-badge fmt-nitidez' : 'fmt-badge';
-    const stCls = r.status === 'Pronto' ? 'status-pronto' : r.status === 'Erro' ? 'status-erro' : 'status-proc';
-    const stTxt = r.status === 'Pronto' ? t('ready') : r.status === 'Erro' ? t('error') : t('processing');
-    const stIcon = r.status === 'Pronto'
-      ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`
-      : r.status === 'Erro'
-      ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
-      : `<svg class="spin" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+    const statusBadge = item.status === 'ok'
+      ? `<span class="status-pronto"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>${APP.lang === 'pt' ? 'Pronto' : 'Done'}</span>`
+      : item.status === 'err'
+      ? `<span class="status-erro" title="${item.error || ''}"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>${APP.lang === 'pt' ? 'Erro' : 'Error'}</span>`
+      : `<span class="status-proc"><svg class="spin" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>${APP.lang === 'pt' ? 'Processando' : 'Processing'}</span>`;
 
-    const viewBtn = r.status === 'Pronto'
-      ? `<button onclick="viewPDF('${r.id}')" title="Visualizar"
-           class="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-         </button>` : '';
+    const fmtBadge = `<span class="fmt-badge ${item.format === 'Nitidez+' ? 'fmt-nitidez' : ''}">${item.format || 'Padrão'}</span>`;
+    const timeStr = item.time ? `${item.time}s` : '–';
 
-    return `
-    <tr class="border-t border-gray-50 hover:bg-gray-50/60 transition-colors group">
-      <td class="px-3 py-2.5">
-        <input type="checkbox" class="w-3.5 h-3.5 rounded accent-green-600">
+    const hasLocalPdf = item.pdf && item.status === 'ok';
+    const hasCloudPdf = item.cloudPdf && item.id && item.status === 'ok';
+    const canDownload = hasLocalPdf || hasCloudPdf;
+
+    const downloadBtn = canDownload
+      ? `<button onclick="downloadItem(${idx})" title="Download PDF" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>`
+      : '';
+
+    const deleteBtn = `<button onclick="deleteItem(${idx})" title="Remover" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </button>`;
+
+    const cloudIcon = (hasCloudPdf && !hasLocalPdf)
+      ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" title="Salvo na nuvem" class="inline-block ml-1"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`
+      : '';
+
+    tr.innerHTML = `
+      <td class="px-4 py-3 text-xs text-gray-800 max-w-[120px]">
+        <span class="truncate block font-medium" title="${item.filename}">${item.filename}</span>${cloudIcon}
       </td>
-      <td class="px-3 py-2.5 text-gray-600 whitespace-nowrap">
-        <span class="flex items-center gap-1.5">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          ${ds}
-        </span>
-      </td>
-      <td class="px-3 py-2.5">
-        <span class="flex items-center gap-1 text-gray-700">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          ${r.labelCount}
-        </span>
-      </td>
-      <td class="px-3 py-2.5"><span class="${fmtClass}">${r.format}</span></td>
-      <td class="px-3 py-2.5 text-gray-500">
-        <span class="flex items-center gap-1">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          ${r.processingTime}s
-        </span>
-      </td>
-      <td class="px-3 py-2.5"><span class="${stCls}">${stIcon}${stTxt}</span></td>
-      <td class="px-3 py-2.5">
-        <div class="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-          ${viewBtn}
-          <button onclick="deleteRecord('${r.id}')" title="Excluir"
-            class="p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-
-  renderPagination();
-}
-
-function renderPagination() {
-  const total = Math.ceil(APP.filtered.length / APP.perPage);
-  const pg = document.getElementById('pagination');
-  if (total <= 1) { pg.classList.add('hidden'); return; }
-  pg.classList.remove('hidden');
-
-  const cur = APP.page;
-  let pages = [];
-  if (total <= 5) for (let i=1;i<=total;i++) pages.push(i);
-  else if (cur <= 3) pages = [1,2,3,4,5];
-  else if (cur >= total-2) { for(let i=total-4;i<=total;i++) pages.push(i); }
-  else { for(let i=cur-2;i<=cur+2;i++) pages.push(i); }
-
-  pg.innerHTML =
-    `<button onclick="goPage(${cur-1})" ${cur===1?'disabled':''} class="px-2.5 py-1.5 text-xs text-gray-500 hover:bg-gray-100 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← ${t('prev')}</button>` +
-    pages.map(p => `<button onclick="goPage(${p})" class="w-7 h-7 text-xs rounded-lg transition-colors ${p===cur?'bg-green-600 text-white font-bold':'text-gray-600 hover:bg-gray-100'}">${p}</button>`).join('') +
-    `<button onclick="goPage(${cur+1})" ${cur===total?'disabled':''} class="px-2.5 py-1.5 text-xs text-gray-500 hover:bg-gray-100 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors">${t('next')} →</button>`;
-}
-
-function goPage(p) {
-  const tot = Math.ceil(APP.filtered.length / APP.perPage);
-  if (p < 1 || p > tot) return;
-  APP.page = p;
-  renderHistory();
-}
-
-function renderSummary() {
-  document.getElementById('total-labels').textContent = APP.history.reduce((s,r) => s + (r.labelCount||0), 0);
-  document.getElementById('total-conversions').textContent = APP.history.length;
-  document.getElementById('total-count').textContent = t('totalReg', APP.history.length);
-}
-
-// ================================================================
-// PDF VIEWER
-// ================================================================
-async function viewPDF(id) {
-  const data = await getPDF(id);
-  if (!data) return;
-  APP.currentViewId = id;
-  const inner = document.getElementById('pdf-inner');
-  inner.innerHTML = `<iframe src="${data.url}" frameborder="0" style="width:100%;min-height:560px;min-width:380px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.4)"></iframe>`;
-  showModal('pdf-modal');
-}
-
-async function downloadCurrentPDF() {
-  if (!APP.currentViewId) return;
-  const data = pdfStore[APP.currentViewId];
-  if (!data) return;
-  const a = document.createElement('a');
-  a.href = data.url;
-  a.download = `label-${APP.currentViewId.slice(0,8)}.pdf`;
-  a.click();
-}
-
-// ================================================================
-// DELETE
-// ================================================================
-function deleteRecord(id) {
-  if (!confirm('Confirmar exclusão deste registro?')) return;
-  APP.history = APP.history.filter(r => r.id !== id);
-  saveHistory();
-  deleteZPL(id);
-  if (pdfStore[id]) { URL.revokeObjectURL(pdfStore[id].url); delete pdfStore[id]; }
-  applyFilters();
-  renderHistory();
-  renderSummary();
-}
-
-// ================================================================
-// MODALS
-// ================================================================
-function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
-  if (id === 'pdf-modal') { APP.currentViewId = null; }
-}
-function handleModalBgClick(e, id) {
-  if (e.target === e.currentTarget) closeModal(id);
-}
-
-// ================================================================
-// LANGUAGE
-// ================================================================
-function setLang(l) {
-  APP.lang = l;
-  toggleDropdown('lang-dd','lang-ov');
-  applyTranslations();
-}
-
-// ================================================================
-// USER MENU
-// ================================================================
-function toggleUserMenu() {
-  const m = document.getElementById('user-menu');
-  const ov = document.getElementById('user-menu-overlay');
-  const open = m.classList.contains('hidden');
-  m.classList.toggle('hidden', !open);
-  ov.classList.toggle('hidden', !open);
-}
-function closeUserMenu() {
-  document.getElementById('user-menu').classList.add('hidden');
-  document.getElementById('user-menu-overlay').classList.add('hidden');
-}
-function handleLogout() { closeUserMenu(); alert('Sessão encerrada.'); }
-function handleDeleteAccount() {
-  if (!confirm('Tem certeza que deseja excluir todos os dados? Esta ação não pode ser desfeita.')) return;
-  localStorage.removeItem(HIST_KEY);
-  localStorage.removeItem(ZPL_KEY);
-  Object.keys(pdfStore).forEach(id => URL.revokeObjectURL(pdfStore[id].url));
-  APP.history = []; APP.filtered = [];
-  closeUserMenu();
-  renderHistory(); renderSummary();
-}
-
-// ================================================================
-// FEEDBACK
-// ================================================================
-function submitFeedback() {
-  const msg = document.getElementById('feedback-msg').value.trim();
-  if (!msg) { alert('Escreva uma mensagem antes de enviar.'); return; }
-  closeModal('feedback-modal');
-  document.getElementById('feedback-msg').value = '';
-  setTimeout(() => alert('Feedback enviado com sucesso! Obrigado.'), 100);
-}
-
-// ================================================================
-// DROPDOWN
-// ================================================================
-function toggleDropdown(ddId, ovId) {
-  document.getElementById(ddId).classList.toggle('hidden');
-  document.getElementById(ovId).classList.toggle('hidden');
-}
-
-// ================================================================
-// PROCESSING UI
-// ================================================================
-function showProc(show, msg) {
-  const el = document.getElementById('processing-overlay');
-  if (show) {
-    if (msg) document.getElementById('proc-msg').textContent = msg;
-    el.classList.remove('hidden');
-  } else {
-    el.classList.add('hidden');
-    document.getElementById('proc-msg').textContent = t('processing');
-    document.getElementById('proc-sub').textContent = '';
-  }
-}
-
-// ================================================================
-// ESC KEY
-// ================================================================
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  ['pdf-modal','feedback-modal','pix-modal'].forEach(id => {
-    if (!document.getElementById(id).classList.contains('hidden')) closeModal(id);
+      <td class="px-4 py-3 text-xs text-gray-600">${item.labelCount || '–'}</td>
+      <td class="px-4 py-3">${fmtBadge}</td>
+      <td class="px-4 py-3 text-xs text-gray-500 hidden sm:table-cell">${timeStr}</td>
+      <td class="px-4 py-3">${statusBadge}</td>
+      <td class="px-4 py-3"><div class="flex items-center gap-1">${downloadBtn}${deleteBtn}</div></td>
+    `;
+    body.appendChild(tr);
   });
-  if (!document.getElementById('user-menu').classList.contains('hidden')) closeUserMenu();
-  if (!document.getElementById('lang-dd').classList.contains('hidden')) toggleDropdown('lang-dd','lang-ov');
-});
+}
 
-// ================================================================
-// INIT
-// ================================================================
-(function init() {
-  loadHistory();
-  applyFilters();
+function downloadItem(idx) {
+  const item = APP.history[idx];
+  if (!item) return;
+
+  if (item.pdf) {
+    // Local blob download
+    const url = URL.createObjectURL(item.pdf);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = item.filename.replace(/\.(txt|zpl)$/i, '') + '.pdf';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } else if (item.cloudPdf && item.id) {
+    downloadCloudPdf(item.id, item.filename.replace(/\.(txt|zpl)$/i, ''));
+  }
+}
+
+async function deleteItem(idx) {
+  const item = APP.history[idx];
+  if (!item) return;
+
+  if (APP.user && item.id) {
+    await deleteCloudConversion(item.id);
+  }
+
+  APP.history.splice(idx, 1);
+  if (!APP.user) saveLocalHistory();
   renderHistory();
-  renderSummary();
-  applyTranslations();
+}
+
+async function clearHistory() {
+  if (APP.user) {
+    const ids = APP.history.filter(h => h.id).map(h => h.id);
+    for (const id of ids) {
+      await deleteCloudConversion(id);
+    }
+  }
+  APP.history = [];
+  if (!APP.user) localStorage.removeItem('zpl_history');
+  renderHistory();
+}
+
+// ====== PREVIEW ======
+function showPreview(name, blobs) {
+  document.getElementById('preview-empty').classList.add('hidden');
+  const content = document.getElementById('preview-content');
+  content.classList.remove('hidden');
+  content.classList.add('flex');
+  document.getElementById('preview-title').textContent = name;
+  setPreviewIdx(0);
+  updatePageInfo();
+}
+
+function setPreviewIdx(idx) {
+  if (!APP.previewImgs.length) return;
+  APP.previewIdx = Math.max(0, Math.min(idx, APP.previewImgs.length - 1));
+  document.getElementById('preview-img').src = APP.previewImgs[APP.previewIdx];
+  updatePageInfo();
+}
+
+function updatePageInfo() {
+  const el = document.getElementById('preview-page-info');
+  if (APP.previewImgs.length > 1) {
+    el.textContent = `${APP.previewIdx + 1} / ${APP.previewImgs.length}`;
+  } else {
+    el.textContent = '';
+  }
+}
+
+function prevPreview() { setPreviewIdx(APP.previewIdx - 1); }
+function nextPreview() { setPreviewIdx(APP.previewIdx + 1); }
+
+// ====== DRAG & DROP ======
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.add('drop-active');
+}
+function handleDragLeave(e) {
+  document.getElementById('drop-zone').classList.remove('drop-active');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drop-active');
+  const files = Array.from(e.dataTransfer.files).filter(f => /\.(txt|zpl|zip)$/i.test(f.name));
+  if (files.length) processFiles(files);
+}
+function handleFileInput(e) {
+  const files = Array.from(e.target.files);
+  if (files.length) processFiles(files);
+  e.target.value = '';
+}
+
+// ====== FORMAT SELECTOR ======
+function setFormat(fmt) {
+  APP.selectedFormat = fmt;
+  const btn1 = document.getElementById('fmt-padrao');
+  const btn2 = document.getElementById('fmt-nitidez');
+  if (fmt === 'Padrão') {
+    btn1.className = 'px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all';
+    btn2.className = 'px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all';
+  } else {
+    btn2.className = 'px-3 py-1.5 text-xs rounded-lg border border-blue-500 bg-blue-50 text-blue-700 font-medium transition-all';
+    btn1.className = 'px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all';
+  }
+}
+
+// ====== PROGRESS BAR ======
+function showProgressBar(visible) {
+  document.getElementById('progress-bar-wrap').classList.toggle('hidden', !visible);
+  if (!visible) {
+    document.getElementById('progress-bar').style.width = '0%';
+  }
+}
+function updateProgress(label, done, total) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progress-label').textContent = label;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+// ====== MODAL UTILS ======
+function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ====== DROPDOWN UTILS ======
+function toggleDropdown(ddId, ovId) {
+  const dd = document.getElementById(ddId);
+  const ov = ovId ? document.getElementById(ovId) : null;
+  const isHidden = dd.classList.contains('hidden');
+  dd.classList.toggle('hidden', !isHidden);
+  if (ov) ov.classList.toggle('hidden', !isHidden);
+}
+function closeDropdown(ddId, ovId) {
+  const dd = document.getElementById(ddId);
+  if (dd) dd.classList.add('hidden');
+  if (ovId) { const ov = document.getElementById(ovId); if (ov) ov.classList.add('hidden'); }
+}
+
+// ====== TOAST ======
+let toastTimer = null;
+function showToast(msg, duration) {
+  duration = duration || 2800;
+  const inner = document.getElementById('toast-inner');
+  inner.textContent = msg;
+  inner.classList.remove('hidden');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => inner.classList.add('hidden'), duration);
+}
+
+// ====== SCROLL TO HISTORY ======
+function scrollToHistory() {
+  const el = document.getElementById('history-section');
+  if (el && !el.classList.contains('hidden')) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ====== LANGUAGE ======
+const TEXTS = {
+  pt: {
+    betaText: '⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.',
+    uploadLabel: 'Carregue seus arquivos ZPL para convertê-los para o formato PDF',
+    dropMain: 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)',
+    formats: 'Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL',
+    previewEmpty: 'Pré-visualização aparecerá aqui',
+    historyTitle: 'Histórico de Conversões',
+    thFile: 'Arquivo', thLabels: 'Etiquetas', thFormat: 'Formato', thTime: 'Tempo', thStatus: 'Status',
+  },
+  en: {
+    betaText: '⚙️ This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.',
+    uploadLabel: 'Upload your ZPL files to convert them to PDF format',
+    dropMain: 'Drag and drop your files here (multiple files supported)',
+    formats: 'Accepted formats: .txt, .zpl or .zip with ZPL files',
+    previewEmpty: 'Preview will appear here',
+    historyTitle: 'Conversion History',
+    thFile: 'File', thLabels: 'Labels', thFormat: 'Format', thTime: 'Time', thStatus: 'Status',
+  }
+};
+
+function setLang(lang) {
+  APP.lang = lang;
+  document.documentElement.lang = lang;
+  localStorage.setItem('zpl_lang', lang);
+  closeDropdown('lang-dd', 'lang-ov');
+
+  const T = TEXTS[lang];
+  document.getElementById('beta-text').textContent = T.betaText;
+  document.getElementById('upload-label-text').textContent = T.uploadLabel;
+  document.getElementById('drop-main-text').textContent = T.dropMain;
+  document.getElementById('formats-text').textContent = T.formats;
+  document.getElementById('preview-empty-text').textContent = T.previewEmpty;
+  document.getElementById('history-title').textContent = T.historyTitle;
+  document.getElementById('th-file').textContent = T.thFile;
+  document.getElementById('th-labels').textContent = T.thLabels;
+  document.getElementById('th-format').textContent = T.thFormat;
+  document.getElementById('th-time').textContent = T.thTime;
+  document.getElementById('th-status').textContent = T.thStatus;
+
+  document.getElementById('check-pt').classList.toggle('hidden', lang !== 'pt');
+  document.getElementById('check-en').classList.toggle('hidden', lang !== 'en');
+
+  renderHistory();
+}
+
+// ====== FEEDBACK ======
+function submitFeedback() {
+  const text = document.getElementById('feedback-text').value.trim();
+  if (!text) return;
+  document.getElementById('feedback-text').value = '';
+  hideModal('feedback-modal');
+  showToast(APP.lang === 'pt' ? 'Feedback enviado! Obrigado ✓' : 'Feedback sent! Thank you ✓');
+}
+
+// ====== INIT ======
+(async function init() {
+  const savedLang = localStorage.getItem('zpl_lang') || 'pt';
+  setLang(savedLang);
+  setFormat('Padrão');
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.add('hidden'); });
+  });
+
+  // Init Supabase auth
+  await initAuth();
+
+  // Load local history if not logged in (will be replaced by cloud if user logs in)
+  if (!APP.user) {
+    loadLocalHistory();
+  }
+
+  // Close lang dropdown on click outside
+  document.addEventListener('click', e => {
+    const langBtn = document.getElementById('lang-btn');
+    const langDd = document.getElementById('lang-dd');
+    if (langDd && !langDd.classList.contains('hidden') && !langDd.contains(e.target) && !langBtn.contains(e.target)) {
+      langDd.classList.add('hidden');
+    }
+  });
 })();
 </script>
 </body>
