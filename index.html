@@ -8,7 +8,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .drop-active { background-color: #f0fdf4 !important; border-color: #16a34a !important; }
@@ -272,48 +271,36 @@
 </main>
 
 <!-- ======================== VIEW MODAL ======================== -->
-<div id="view-modal" class="modal-overlay hidden" style="align-items:flex-start;padding-top:40px;">
-  <div style="background:#fff;border-radius:20px;width:100%;max-width:480px;position:relative;display:flex;flex-direction:column;max-height:88vh;overflow:hidden;">
+<div id="view-modal" class="modal-overlay hidden" style="padding:16px;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:960px;height:92vh;position:relative;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.35);">
     <!-- Header -->
-    <div style="background:#16a34a;padding:16px 20px;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="background:#16a34a;padding:13px 18px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:8px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span id="vm-title" style="color:white;font-weight:600;font-size:14px;"></span>
+        <span id="vm-title" style="color:white;font-weight:600;font-size:14px;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <span id="vm-page-info" style="color:rgba(255,255,255,0.75);font-size:12px;"></span>
-        <button onclick="hideModal('view-modal')" style="color:rgba(255,255,255,0.8);background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <button id="vm-download-btn" onclick="vmDownload()" style="display:none;align-items:center;gap:5px;background:rgba(255,255,255,0.18);color:white;border:1px solid rgba(255,255,255,0.35);border-radius:8px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Baixar
+        </button>
+        <button onclick="vmClose()" style="color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.12);border:none;cursor:pointer;padding:6px;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
     </div>
-    <!-- Image area -->
-    <div style="flex:1;overflow:hidden;background:#f8fafc;display:flex;align-items:center;justify-content:center;position:relative;min-height:300px;">
-      <!-- spinner -->
-      <div id="vm-loading" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#9ca3af;">
-        <svg class="spin" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        <span style="font-size:13px;">Carregando...</span>
-      </div>
-      <!-- image -->
-      <img id="vm-img" src="" alt="" style="display:none;max-width:100%;max-height:420px;object-fit:contain;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.12);" />
-      <!-- prev/next overlays -->
-      <button id="vm-prev" onclick="vmNav(-1)" style="display:none;position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.9);border:1px solid #e5e7eb;border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);" id="vm-prev">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button id="vm-next" onclick="vmNav(1)" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.9);border:1px solid #e5e7eb;border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
+    <!-- Loading state -->
+    <div id="vm-loading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#9ca3af;background:#f8fafc;">
+      <svg class="spin" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      <span style="font-size:13px;color:#6b7280;">Carregando PDF...</span>
     </div>
-    <!-- Thumbnail strip -->
-    <div id="vm-thumbs" style="display:none;flex-shrink:0;padding:10px 14px;background:#fff;border-top:1px solid #f3f4f6;overflow-x:auto;display:flex;gap:6px;scrollbar-width:thin;"></div>
-    <!-- Footer -->
-    <div style="flex-shrink:0;padding:12px 16px;background:#fff;border-top:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;">
-      <span id="vm-label-count" style="font-size:12px;color:#6b7280;"></span>
-      <button id="vm-download-btn" onclick="vmDownload()" style="display:flex;align-items:center;gap:6px;background:#16a34a;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Baixar PDF
-      </button>
+    <!-- Error state -->
+    <div id="vm-error" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#9ca3af;background:#f8fafc;">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p style="font-size:13px;color:#6b7280;">Prévia não disponível para este item.</p>
     </div>
+    <!-- PDF iframe (native browser PDF viewer) -->
+    <iframe id="vm-iframe" src="about:blank" style="display:none;flex:1;border:none;width:100%;min-height:0;" allow="fullscreen"></iframe>
   </div>
 </div>
 
@@ -854,173 +841,86 @@ function renderHistory() {
 }
 
 // ====== VIEW MODAL ======
-const VM = { idx: null, imgs: [], cur: 0 };
+const VM = { idx: null, blobUrl: null };
 
 async function viewItem(idx) {
   const item = APP.history[idx];
   if (!item) return;
   VM.idx = idx;
-  VM.imgs = [];
-  VM.cur = 0;
+
+  // Revoke previous blob URL to free memory
+  if (VM.blobUrl) { URL.revokeObjectURL(VM.blobUrl); VM.blobUrl = null; }
 
   // Set title
   document.getElementById('vm-title').textContent = item.filename || 'Etiquetas';
-  const countEl = document.getElementById('vm-label-count');
-  countEl.textContent = item.labelCount ? `${item.labelCount} etiqueta${item.labelCount !== 1 ? 's' : ''}` : '';
 
-  // Show download button only if possible
-  const canDl = (item.pdf && item.status === 'ok') || (item.cloudPdf && item.id && item.status === 'ok');
+  // Show/hide download button
+  const canDl = (item.pdf || (item.cloudPdf && item.id)) && item.status === 'ok';
   document.getElementById('vm-download-btn').style.display = canDl ? 'flex' : 'none';
 
   showModal('view-modal');
-  vmShowLoading(true);
+  vmSetState('loading');
 
-  // Source 1: previewBlobs in memory (fastest)
-  if (item.previewBlobs && item.previewBlobs.length) {
-    VM.imgs = item.previewBlobs.map(b => URL.createObjectURL(b));
-    vmRender();
-    return;
-  }
+  let pdfBlob = null;
 
-  // Source 2: local PDF blob → render pages as images via canvas
+  // Source 1: local PDF blob (freshly converted, still in memory)
   if (item.pdf) {
-    await vmLoadPdfBlob(item.pdf);
-    return;
+    pdfBlob = item.pdf;
+  }
+  // Source 2: cloud PDF → download from Supabase Storage
+  else if (item.cloudPdf && item.id && APP.user) {
+    const { data, error } = await sb.storage.from('pdfs').download(`${APP.user.id}/${item.id}.pdf`);
+    if (!error && data) pdfBlob = data;
+  }
+  // Source 3: rebuild PDF from in-memory preview PNGs
+  else if (item.previewBlobs && item.previewBlobs.length) {
+    pdfBlob = await vmBuildPdfFromBlobs(item.previewBlobs);
   }
 
-  // Source 3: cloud PDF → download then render
-  if (item.cloudPdf && item.id && APP.user) {
-    const path = `${APP.user.id}/${item.id}.pdf`;
-    const { data, error } = await sb.storage.from('pdfs').download(path);
-    if (!error && data) {
-      await vmLoadPdfBlob(data);
-      return;
-    }
-  }
-
-  // Fallback: nothing to show
-  vmShowLoading(false);
-  const noImg = document.getElementById('vm-img');
-  noImg.style.display = 'flex';
-  noImg.style.alignItems = 'center';
-  noImg.style.justifyContent = 'center';
-  noImg.style.color = '#9ca3af';
-  noImg.style.fontSize = '13px';
-  noImg.style.width = '100%';
-  noImg.style.minHeight = '200px';
-  noImg.removeAttribute('src');
-  document.getElementById('vm-loading').innerHTML =
-    `<p style="color:#9ca3af;font-size:13px;">Prévia não disponível para este item.</p>`;
-  document.getElementById('vm-loading').style.display = 'flex';
-}
-
-async function vmLoadPdfBlob(blob) {
-  try {
-    // Configure PDF.js worker
-    if (window.pdfjsLib) {
-      if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-          'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-      }
-      const arrayBuffer = await blob.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const pages = [];
-      for (let p = 1; p <= pdf.numPages; p++) {
-        const page = await pdf.getPage(p);
-        // Scale for label size 4x6 inch @ 150dpi = 600x900px, capped
-        const viewport = page.getViewport({ scale: 1.8 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const ctx = canvas.getContext('2d');
-        await page.render({ canvasContext: ctx, viewport }).promise;
-        pages.push(canvas.toDataURL('image/png'));
-      }
-      VM.imgs = pages;
-      vmRender();
-    } else {
-      // PDF.js not yet loaded — fallback: open PDF in new tab for printing
-      vmShowLoading(false);
-      const url = URL.createObjectURL(blob);
-      document.getElementById('vm-img').style.display = 'none';
-      document.getElementById('vm-loading').innerHTML =
-        `<div style="text-align:center;padding:20px;">
-          <p style="color:#374151;font-size:13px;margin-bottom:12px;">Abrindo visualizador...</p>
-          <button onclick="window.open('${url}','_blank')" style="background:#16a34a;color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;">
-            Abrir PDF para imprimir
-          </button>
-        </div>`;
-      document.getElementById('vm-loading').style.display = 'flex';
-    }
-  } catch(e) {
-    vmShowLoading(false);
-    console.warn('vmLoadPdfBlob error', e);
-  }
-}
-
-function vmRender() {
-  if (!VM.imgs.length) return;
-  vmShowLoading(false);
-
-  const img = document.getElementById('vm-img');
-  const prev = document.getElementById('vm-prev');
-  const next = document.getElementById('vm-next');
-  const thumbs = document.getElementById('vm-thumbs');
-  const pageInfo = document.getElementById('vm-page-info');
-
-  // Remove iframe if present
-  const old = document.getElementById('vm-iframe');
-  if (old) old.remove();
-
-  img.style.display = 'block';
-  img.src = VM.imgs[VM.cur];
-
-  const total = VM.imgs.length;
-  pageInfo.textContent = total > 1 ? `${VM.cur + 1} / ${total}` : '';
-  prev.style.display = total > 1 ? 'flex' : 'none';
-  next.style.display = total > 1 ? 'flex' : 'none';
-
-  // Thumbnails for > 1 page
-  if (total > 1) {
-    thumbs.style.display = 'flex';
-    thumbs.innerHTML = '';
-    VM.imgs.forEach((src, i) => {
-      const t = document.createElement('img');
-      t.src = src;
-      t.alt = `Página ${i+1}`;
-      t.onclick = () => { VM.cur = i; vmRender(); };
-      t.style.cssText = `height:52px;width:auto;border-radius:6px;cursor:pointer;border:2px solid ${i === VM.cur ? '#16a34a' : 'transparent'};flex-shrink:0;object-fit:contain;background:#f3f4f6;`;
-      thumbs.appendChild(t);
-    });
-    // Scroll active thumb into view
-    thumbs.children[VM.cur]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  if (pdfBlob) {
+    VM.blobUrl = URL.createObjectURL(pdfBlob);
+    const iframe = document.getElementById('vm-iframe');
+    iframe.src = VM.blobUrl;
+    vmSetState('iframe');
   } else {
-    thumbs.style.display = 'none';
+    vmSetState('error');
   }
 }
 
-function vmNav(dir) {
-  if (!VM.imgs.length) return;
-  VM.cur = Math.max(0, Math.min(VM.cur + dir, VM.imgs.length - 1));
-  vmRender();
+// Rebuild a PDF from an array of PNG blobs (fallback)
+async function vmBuildPdfFromBlobs(blobs) {
+  try {
+    const { jsPDF } = window.jspdf;
+    const w = 4, h = 6;
+    const doc = new jsPDF({ unit: 'in', format: [w, h], orientation: 'portrait' });
+    for (let i = 0; i < blobs.length; i++) {
+      if (i > 0) doc.addPage([w, h], 'portrait');
+      doc.addImage(await blobToDataUrl(blobs[i]), 'PNG', 0, 0, w, h);
+    }
+    return doc.output('blob');
+  } catch(e) { return null; }
 }
 
-function vmShowLoading(show) {
-  document.getElementById('vm-loading').style.display = show ? 'flex' : 'none';
-  document.getElementById('vm-img').style.display = show ? 'none' : 'block';
+function vmSetState(state) {
+  document.getElementById('vm-loading').style.display  = state === 'loading' ? 'flex'  : 'none';
+  document.getElementById('vm-error').style.display    = state === 'error'   ? 'flex'  : 'none';
+  document.getElementById('vm-iframe').style.display   = state === 'iframe'  ? 'block' : 'none';
 }
 
-function vmDownload() {
-  downloadItem(VM.idx);
+function vmDownload() { downloadItem(VM.idx); }
+
+// Close modal cleans up blob URL
+function vmClose() {
+  hideModal('view-modal');
+  if (VM.blobUrl) { URL.revokeObjectURL(VM.blobUrl); VM.blobUrl = null; }
+  document.getElementById('vm-iframe').src = 'about:blank';
 }
 
-// Keyboard navigation inside view modal
+// Keyboard: Escape closes view modal
 document.addEventListener('keydown', e => {
   const modal = document.getElementById('view-modal');
   if (modal && !modal.classList.contains('hidden')) {
-    if (e.key === 'ArrowLeft') vmNav(-1);
-    if (e.key === 'ArrowRight') vmNav(1);
-    if (e.key === 'Escape') hideModal('view-modal');
+    if (e.key === 'Escape') vmClose();
   }
 });
 
@@ -1203,7 +1103,12 @@ function submitFeedback() {
 
   // Close modals on overlay click
   document.querySelectorAll('.modal-overlay').forEach(el => {
-    el.addEventListener('click', e => { if (e.target === el) el.classList.add('hidden'); });
+    el.addEventListener('click', e => {
+      if (e.target === el) {
+        if (el.id === 'view-modal') vmClose();
+        else el.classList.add('hidden');
+      }
+    });
   });
 
   // Close dropdowns on outside click
