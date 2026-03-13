@@ -152,6 +152,24 @@
     .sz-btn:hover { border-color:#5B0C8C;color:#5B0C8C; }
     .sz-btn.active { border-color:#5B0C8C;background:#f3e8ff;color:#5B0C8C; }
 
+    /* ===== ADMIN PANEL ===== */
+    .admin-kpi {
+      background:#fff;border-radius:16px;padding:20px 22px;
+      border:1px solid #f0e8fb;box-shadow:0 2px 12px rgba(91,12,140,0.06);
+    }
+    .admin-kpi-val { font-size:28px;font-weight:800;color:#1f2937;letter-spacing:-0.03em;line-height:1; }
+    .admin-kpi-lbl { font-size:12px;color:#6b7280;font-weight:500;margin-top:4px; }
+    .admin-kpi-delta { font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;margin-top:8px;display:inline-block; }
+    .admin-tab-btn { padding:10px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:#6b7280;border-bottom:2px solid transparent;transition:all 0.15s; }
+    .admin-tab-btn.active { color:#5B0C8C;border-bottom-color:#5B0C8C; }
+    .admin-table th { text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #f3f4f6;white-space:nowrap; }
+    .admin-table td { padding:11px 14px;font-size:13px;color:#374151;border-bottom:1px solid #f9fafb;vertical-align:middle; }
+    .admin-table tr:hover td { background:#faf5ff; }
+    .admin-user-avatar { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0; }
+    .conv-status-ok  { background:#dcfce7;color:#16a34a;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px; }
+    .conv-status-err { background:#fee2e2;color:#dc2626;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px; }
+    .conv-status-proc{ background:#fef3c7;color:#d97706;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px; }
+
     /* ===== DATE RANGE INPUTS ===== */
     .date-range-input { border:1px solid #e5e7eb;border-radius:7px;padding:5px 8px;font-size:11px;outline:none;color:#374151;background:#fff;transition:border-color 0.15s; }
     .date-range-input:focus { border-color:#5B0C8C;box-shadow:0 0 0 2px rgba(91,12,140,0.08); }
@@ -276,6 +294,11 @@
             <p class="text-xs text-gray-400 font-medium">Conta</p>
             <p id="dd-email" class="text-sm text-gray-800 font-semibold truncate mt-0.5"></p>
           </div>
+          <button id="nav-admin-btn" onclick="closeDropdown('user-dd');showAdminPanel()" class="hidden w-full text-left px-4 py-2.5 text-sm hover:bg-purple-50 flex items-center gap-2 transition-colors font-semibold" style="color:#5B0C8C;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Painel Admin
+            <span style="background:#5B0C8C;color:white;font-size:9px;padding:1px 6px;border-radius:99px;margin-left:auto;">ADMIN</span>
+          </button>
           <button onclick="closeDropdown('user-dd');scrollToHistory()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 transition-colors">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 5 12 12 16 14"/><circle cx="12" cy="12" r="10"/></svg>
             Meu Histórico
@@ -692,6 +715,144 @@
   </main>
 </div><!-- end #app-page -->
 
+<!-- ======================== ADMIN PAGE ======================== -->
+<div id="admin-page" class="hidden min-h-screen" style="background:#f8f5ff;">
+
+  <!-- Admin top bar -->
+  <div style="background:#5B0C8C;padding:0 16px;">
+    <div class="max-w-screen-xl mx-auto h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button onclick="exitAdminPanel()" class="flex items-center gap-1.5 text-purple-300 hover:text-white transition-colors text-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
+        <div style="width:1px;height:18px;background:rgba(255,255,255,0.2);"></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AC000" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span class="text-white font-bold text-sm tracking-wide">Painel Admin</span>
+        <span style="background:rgba(154,192,0,0.2);color:#c8f500;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid rgba(154,192,0,0.35);">ETIKETEI</span>
+      </div>
+      <button onclick="loadAdminData()" id="admin-refresh-btn" class="flex items-center gap-1.5 text-purple-300 hover:text-white transition-colors text-sm">
+        <svg id="admin-refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+        Atualizar
+      </button>
+    </div>
+  </div>
+
+  <main class="max-w-screen-xl mx-auto px-4 py-6">
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div class="admin-kpi">
+        <div class="flex items-center gap-2 mb-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Usuários</span>
+        </div>
+        <div id="kpi-users" class="admin-kpi-val">–</div>
+        <div class="admin-kpi-lbl">cadastrados</div>
+      </div>
+      <div class="admin-kpi">
+        <div class="flex items-center gap-2 mb-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Hoje</span>
+        </div>
+        <div id="kpi-today-convs" class="admin-kpi-val">–</div>
+        <div class="admin-kpi-lbl">conversões hoje</div>
+      </div>
+      <div class="admin-kpi">
+        <div class="flex items-center gap-2 mb-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AC000" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Hoje</span>
+        </div>
+        <div id="kpi-today-labels" class="admin-kpi-val" style="color:#5B0C8C;">–</div>
+        <div class="admin-kpi-lbl">etiquetas hoje</div>
+      </div>
+      <div class="admin-kpi">
+        <div class="flex items-center gap-2 mb-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total</span>
+        </div>
+        <div id="kpi-total-convs" class="admin-kpi-val">–</div>
+        <div class="admin-kpi-lbl">conversões total</div>
+      </div>
+      <div class="admin-kpi">
+        <div class="flex items-center gap-2 mb-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AC000" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total</span>
+        </div>
+        <div id="kpi-total-labels" class="admin-kpi-val" style="color:#5B0C8C;">–</div>
+        <div class="admin-kpi-lbl">etiquetas total</div>
+      </div>
+    </div>
+
+    <!-- Tabs panel -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+
+      <!-- Tab header + search -->
+      <div class="border-b border-gray-100 px-4 flex items-center justify-between flex-wrap gap-3">
+        <div class="flex">
+          <button onclick="switchAdminTab('users')"       class="admin-tab-btn active" id="atab-users">👥 Usuários</button>
+          <button onclick="switchAdminTab('conversions')" class="admin-tab-btn"         id="atab-conversions">📋 Conversões Recentes</button>
+        </div>
+        <input id="admin-search" type="text" placeholder="Buscar por e-mail ou arquivo…" oninput="adminSearch()"
+          class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 outline-none my-2"
+          style="width:220px;transition:border-color 0.15s;" onfocus="this.style.borderColor='#5B0C8C'" onblur="this.style.borderColor='#e5e7eb'" />
+      </div>
+
+      <!-- Loading state -->
+      <div id="admin-loading" class="py-16 text-center text-gray-400">
+        <svg class="spin mx-auto mb-3" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        <p class="text-sm">Carregando dados…</p>
+      </div>
+
+      <!-- Error state -->
+      <div id="admin-error" class="hidden py-12 text-center px-6">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" class="mx-auto mb-3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p class="text-sm font-semibold text-gray-700 mb-1">Funções admin não encontradas</p>
+        <p class="text-xs text-gray-400 max-w-sm mx-auto">Execute o SQL de configuração no painel do Supabase e clique em Atualizar.</p>
+      </div>
+
+      <!-- Users tab -->
+      <div id="admin-tab-users" class="hidden overflow-x-auto">
+        <table class="admin-table w-full">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Cadastrado</th>
+              <th>Última Atividade</th>
+              <th>Conversões</th>
+              <th>✓ / ✗</th>
+              <th>Etiquetas</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-body"></tbody>
+        </table>
+        <div id="admin-users-empty" class="hidden py-10 text-center text-sm text-gray-400">Nenhum usuário encontrado.</div>
+      </div>
+
+      <!-- Conversions tab -->
+      <div id="admin-tab-conversions" class="hidden overflow-x-auto">
+        <table class="admin-table w-full">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Arquivo</th>
+              <th>Etiquetas</th>
+              <th>Formato</th>
+              <th>Status</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="admin-convs-body"></tbody>
+        </table>
+        <div id="admin-convs-empty" class="hidden py-10 text-center text-sm text-gray-400">Nenhuma conversão encontrada.</div>
+      </div>
+
+    </div>
+
+    <p class="text-xs text-gray-400 mt-3 text-center">Dados visíveis apenas para o administrador · Atualizado a cada acesso</p>
+  </main>
+</div>
+
 <!-- ======================== VIEW MODAL ======================== -->
 <div id="view-modal" class="modal-overlay hidden" style="padding:16px;">
   <div style="background:#fff;border-radius:16px;width:100%;max-width:960px;height:92vh;position:relative;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.35);">
@@ -894,6 +1055,9 @@ function updateNavAuth() {
     document.getElementById('nav-avatar').textContent = email.substring(0,2).toUpperCase();
     document.getElementById('nav-email-short').textContent = email;
     document.getElementById('dd-email').textContent = email;
+    // Show admin button only for admin
+    const adminBtn = document.getElementById('nav-admin-btn');
+    if (adminBtn) adminBtn.classList.toggle('hidden', email !== ADMIN_EMAIL);
   }
 }
 
@@ -936,6 +1100,8 @@ async function initAuth() {
 
 async function handleLogout() {
   closeDropdown('user-dd');
+  // Hide admin page if open
+  document.getElementById('admin-page').classList.add('hidden');
   await sb.auth.signOut();
   showToast(APP.lang === 'pt' ? 'Sessão encerrada' : 'Signed out');
 }
@@ -1709,6 +1875,161 @@ function copyPixKey() {
       btn.style.background = '#5B0C8C';
     }, 2000);
   }).catch(() => showToast('Chave PIX: ' + PIX_KEY, 4000));
+}
+
+// ====== ADMIN PANEL ======
+const ADMIN_EMAIL = 'omaytonr@gmail.com';
+const _admin = { users: [], conversions: [], activeTab: 'users' };
+
+function isAdmin() { return APP.user && APP.user.email === ADMIN_EMAIL; }
+
+function showAdminPanel() {
+  if (!isAdmin()) return;
+  document.getElementById('landing-page').classList.add('hidden');
+  document.getElementById('app-page').classList.add('hidden');
+  document.getElementById('admin-page').classList.remove('hidden');
+  loadAdminData();
+}
+
+function exitAdminPanel() {
+  document.getElementById('admin-page').classList.add('hidden');
+  document.getElementById('app-page').classList.remove('hidden');
+}
+
+function switchAdminTab(tab) {
+  _admin.activeTab = tab;
+  ['users','conversions'].forEach(t => {
+    document.getElementById('atab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('admin-tab-' + t).classList.toggle('hidden', t !== tab);
+  });
+  adminSearch();
+}
+
+function adminSearch() {
+  const q = (document.getElementById('admin-search')?.value || '').toLowerCase();
+  if (_admin.activeTab === 'users') renderAdminUsers(_admin.users, q);
+  else renderAdminConversions(_admin.conversions, q);
+}
+
+async function loadAdminData() {
+  if (!isAdmin()) return;
+  const icon = document.getElementById('admin-refresh-icon');
+  if (icon) icon.classList.add('spin');
+  document.getElementById('admin-loading').classList.remove('hidden');
+  document.getElementById('admin-error').classList.add('hidden');
+  document.getElementById('admin-tab-users').classList.add('hidden');
+  document.getElementById('admin-tab-conversions').classList.add('hidden');
+
+  try {
+    const [statsRes, usersRes, convsRes] = await Promise.all([
+      sb.rpc('get_admin_stats'),
+      sb.rpc('get_admin_users'),
+      sb.rpc('get_admin_conversions', { p_limit: 200 }),
+    ]);
+
+    if (statsRes.error) throw statsRes.error;
+    renderAdminStats(statsRes.data);
+
+    _admin.users       = usersRes.data  || [];
+    _admin.conversions = convsRes.data  || [];
+
+    document.getElementById('admin-loading').classList.add('hidden');
+    switchAdminTab(_admin.activeTab);
+    adminSearch();
+  } catch(e) {
+    console.warn('Admin load error:', e);
+    document.getElementById('admin-loading').classList.add('hidden');
+    document.getElementById('admin-error').classList.remove('hidden');
+  }
+
+  if (icon) icon.classList.remove('spin');
+}
+
+function renderAdminStats(s) {
+  const fmt = n => (n ?? 0).toLocaleString('pt-BR');
+  document.getElementById('kpi-users').textContent        = fmt(s.total_users);
+  document.getElementById('kpi-today-convs').textContent  = fmt(s.today_conversions);
+  document.getElementById('kpi-today-labels').textContent = fmt(s.today_labels);
+  document.getElementById('kpi-total-convs').textContent  = fmt(s.total_conversions);
+  document.getElementById('kpi-total-labels').textContent = fmt(s.total_labels);
+}
+
+function renderAdminUsers(users, q) {
+  const body  = document.getElementById('admin-users-body');
+  const empty = document.getElementById('admin-users-empty');
+  const list  = q ? users.filter(u => (u.email||'').toLowerCase().includes(q)) : users;
+
+  empty.classList.toggle('hidden', list.length > 0);
+  body.innerHTML = list.map(u => {
+    const initials = (u.email||'?').substring(0,2).toUpperCase();
+    const hue = [...(u.email||'')].reduce((h,c) => h + c.charCodeAt(0), 0) % 360;
+    const regDate  = u.registered_at ? new Date(u.registered_at).toLocaleDateString('pt-BR') : '–';
+    const lastAct  = u.last_activity  ? timeAgo(u.last_activity)  : '–';
+    const okRate   = u.total_conversions > 0 ? Math.round((u.ok_count/u.total_conversions)*100) : 0;
+    const barColor = okRate >= 80 ? '#9AC000' : okRate >= 50 ? '#f59e0b' : '#dc2626';
+    return `<tr>
+      <td>
+        <div class="flex items-center gap-2">
+          <div class="admin-user-avatar" style="background:hsl(${hue},55%,45%);">${initials}</div>
+          <div>
+            <div class="text-xs font-semibold text-gray-800 truncate max-w-[180px]">${u.email||'–'}</div>
+            <div class="text-xs text-gray-400">id: ${(u.user_id||'').substring(0,8)}…</div>
+          </div>
+        </div>
+      </td>
+      <td class="text-xs text-gray-500">${regDate}</td>
+      <td class="text-xs text-gray-500">${lastAct}</td>
+      <td>
+        <span class="text-sm font-bold text-gray-800">${u.total_conversions||0}</span>
+        <div class="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+          <div style="width:${okRate}%;height:100%;background:${barColor};border-radius:99px;"></div>
+        </div>
+      </td>
+      <td>
+        <span style="color:#16a34a;font-weight:600;font-size:12px;">✓ ${u.ok_count||0}</span>
+        <span class="text-gray-300 mx-1">/</span>
+        <span style="color:#dc2626;font-weight:600;font-size:12px;">✗ ${u.err_count||0}</span>
+      </td>
+      <td class="font-semibold text-sm" style="color:#5B0C8C;">${(u.total_labels||0).toLocaleString('pt-BR')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAdminConversions(convs, q) {
+  const body  = document.getElementById('admin-convs-body');
+  const empty = document.getElementById('admin-convs-empty');
+  const list  = q ? convs.filter(c =>
+    (c.user_email||'').toLowerCase().includes(q) ||
+    (c.filename||'').toLowerCase().includes(q)
+  ) : convs;
+
+  empty.classList.toggle('hidden', list.length > 0);
+  body.innerHTML = list.slice(0,150).map(c => {
+    const dateStr = c.created_at ? new Date(c.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '–';
+    const statusCls = c.status === 'ok' ? 'conv-status-ok' : c.status === 'err' ? 'conv-status-err' : 'conv-status-proc';
+    const statusLbl = c.status === 'ok' ? '✓ Pronto' : c.status === 'err' ? '✗ Erro' : '⟳ Proc.';
+    const fmtColor  = c.format === 'Nitidez+' ? 'background:#e0f2fe;color:#0369a1' : 'background:#ede9fe;color:#7c3aed';
+    return `<tr>
+      <td class="text-xs text-gray-600 max-w-[160px] truncate">${c.user_email||'–'}</td>
+      <td class="text-xs font-medium text-gray-800 max-w-[160px] truncate" title="${c.filename||''}">${c.filename||'–'}</td>
+      <td class="text-sm font-bold" style="color:#5B0C8C;">${c.label_count||'–'}</td>
+      <td><span style="${fmtColor};font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;">${c.format||'–'}</span></td>
+      <td><span class="${statusCls}">${statusLbl}</span></td>
+      <td class="text-xs text-gray-400 whitespace-nowrap">${dateStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff/60000);
+  if (m < 1)  return 'agora';
+  if (m < 60) return `${m}min atrás`;
+  const h = Math.floor(m/60);
+  if (h < 24) return `${h}h atrás`;
+  const d = Math.floor(h/24);
+  if (d < 30) return `${d}d atrás`;
+  return new Date(iso).toLocaleDateString('pt-BR');
 }
 
 // ====== STATS TICKER ======
