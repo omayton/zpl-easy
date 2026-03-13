@@ -10,30 +10,82 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    .drop-active { background-color: #f0fdf4 !important; border-color: #16a34a !important; }
+    .drop-active { background-color: #f5f0ff !important; border-color: #5B0C8C !important; }
     .spin { animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     ::-webkit-scrollbar { width:5px;height:5px; }
     ::-webkit-scrollbar-thumb { background:#d1d5db;border-radius:4px; }
-    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px; }
+    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px; }
     .modal-box { background:#fff;border-radius:16px;padding:28px;width:100%;max-width:420px;position:relative; }
-    .auth-tab-active { border-bottom:2px solid #16a34a;color:#15803d;font-weight:600; }
+    .auth-tab-active { border-bottom:2px solid #5B0C8C;color:#5B0C8C;font-weight:600; }
     .auth-tab { border-bottom:2px solid transparent;color:#6b7280;font-weight:500; }
     .input-field { width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 12px;font-size:14px;outline:none;transition:border-color 0.15s; }
-    .input-field:focus { border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,0.1); }
-    .btn-green { background:#16a34a;color:#fff;border-radius:8px;padding:10px 0;font-size:14px;font-weight:600;width:100%;cursor:pointer;border:none;transition:background 0.15s; }
-    .btn-green:hover { background:#15803d; }
-    .btn-green:disabled { background:#86efac;cursor:not-allowed; }
-    .user-avatar { width:30px;height:30px;border-radius:999px;background:#dcfce7;color:#15803d;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #86efac; }
+    .input-field:focus { border-color:#5B0C8C;box-shadow:0 0 0 3px rgba(91,12,140,0.1); }
+    .btn-primary { background:#5B0C8C;color:#fff;border-radius:8px;padding:10px 0;font-size:14px;font-weight:600;width:100%;cursor:pointer;border:none;transition:background 0.15s; }
+    .btn-primary:hover { background:#4a0a73; }
+    .btn-primary:disabled { background:#c084fc;cursor:not-allowed; }
+    .user-avatar { width:30px;height:30px;border-radius:999px;background:#ede9fe;color:#5B0C8C;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #c4b5fd; }
     .tag-badge { display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600; }
-    .hist-row:hover { background:#f9fafb; }
+    .hist-row:hover { background:#faf5ff; }
     .hist-row { border-bottom:1px solid #f3f4f6;transition:background 0.1s; }
     .filter-btn { border:1px solid #e5e7eb;border-radius:8px;padding:6px 12px;font-size:12px;background:#fff;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:background 0.1s; }
     .filter-btn:hover { background:#f9fafb; }
     .filter-dd { position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #e5e7eb;border-radius:12px;shadow:0 4px 20px rgba(0,0,0,0.08);z-index:50;min-width:160px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1); }
     .filter-dd button { width:100%;text-align:left;padding:9px 14px;font-size:13px;background:none;border:none;cursor:pointer; }
     .filter-dd button:hover { background:#f3f4f6; }
-    .filter-dd button.active { color:#16a34a;font-weight:600; }
+    .filter-dd button.active { color:#5B0C8C;font-weight:600; }
+
+    /* ===== LANDING PAGE STYLES ===== */
+    .hero-gradient {
+      background: linear-gradient(135deg, #1e0335 0%, #3d0870 40%, #5B0C8C 70%, #4a0a73 100%);
+    }
+    .hero-badge {
+      display:inline-flex;align-items:center;gap:6px;background:rgba(154,192,0,0.18);
+      border:1px solid rgba(154,192,0,0.4);border-radius:999px;padding:5px 14px;
+      font-size:12px;font-weight:600;color:#c8f500;letter-spacing:.03em;
+    }
+    .feature-card {
+      background:#fff;border-radius:16px;padding:28px 24px;
+      box-shadow:0 2px 16px rgba(91,12,140,0.07);border:1px solid #f0e8fb;
+      transition:transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { transform:translateY(-4px);box-shadow:0 8px 32px rgba(91,12,140,0.13); }
+    .feature-icon {
+      width:52px;height:52px;border-radius:14px;background:#f3e8ff;
+      display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+    }
+    .step-num {
+      width:40px;height:40px;border-radius:999px;background:#5B0C8C;
+      color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;
+    }
+    .step-connector { width:2px;height:40px;background:#e5d5f8;margin:6px auto; }
+    .btn-lime {
+      background:#9AC000;color:#fff;border-radius:10px;padding:13px 28px;
+      font-size:15px;font-weight:700;cursor:pointer;border:none;
+      transition:background 0.15s,transform 0.1s;display:inline-flex;align-items:center;gap:8px;
+    }
+    .btn-lime:hover { background:#7a9e00;transform:translateY(-1px); }
+    .btn-outline-white {
+      background:transparent;color:#fff;border-radius:10px;padding:13px 28px;
+      font-size:15px;font-weight:600;cursor:pointer;border:2px solid rgba(255,255,255,0.45);
+      transition:background 0.15s,border-color 0.15s;display:inline-flex;align-items:center;gap:8px;
+    }
+    .btn-outline-white:hover { background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.75); }
+    .cta-section { background: linear-gradient(135deg, #5B0C8C, #4a0a73); }
+    .land-footer { background:#0d001a;color:#9ca3af; }
+    .nav-btn-lime {
+      background:#9AC000;color:#fff;border-radius:8px;padding:7px 16px;
+      font-size:13px;font-weight:700;cursor:pointer;border:none;transition:background 0.15s;
+      display:flex;align-items:center;gap:6px;
+    }
+    .nav-btn-lime:hover { background:#7a9e00; }
+    .nav-btn-outline {
+      background:transparent;color:#5B0C8C;border:1.5px solid #5B0C8C;border-radius:8px;
+      padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;
+      transition:background 0.12s;display:flex;align-items:center;gap:6px;
+    }
+    .nav-btn-outline:hover { background:#f5f0ff; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -41,37 +93,67 @@
 <!-- ======================== NAVBAR ======================== -->
 <nav class="bg-white border-b border-gray-200 sticky top-0 z-40">
   <div class="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between">
-    <span class="text-xl font-bold text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0,0)">ZPL Easy</span>
-    <div class="flex items-center gap-2">
-      <button onclick="showModal('pix-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-full hover:bg-red-50 transition-colors">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        Apoiar <span class="bg-green-600 text-white text-xs px-1.5 py-0.5 rounded font-semibold">PIX</span>
-      </button>
-      <button onclick="showModal('feedback-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Feedback
-      </button>
+    <!-- Logo -->
+    <a href="#" onclick="goHome(event)" class="flex items-center gap-2 select-none">
+      <div style="width:30px;height:30px;background:#5B0C8C;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      </div>
+      <span class="text-xl font-bold tracking-tight" style="color:#5B0C8C;">ZPL <span style="color:#9AC000;">Easy</span></span>
+    </a>
+
+    <!-- Landing nav buttons (visible when logged out) -->
+    <div id="nav-landing-btns" class="flex items-center gap-2">
       <!-- Language -->
       <div class="relative">
-        <button id="lang-btn" onclick="toggleDropdown('lang-dd')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors" title="Idioma">
+        <button id="lang-btn" onclick="toggleDropdown('lang-dd')" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" title="Idioma">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         </button>
         <div id="lang-dd" class="hidden absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50 min-w-[140px]">
           <button onclick="setLang('pt')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4">
-            Português <svg id="check-pt" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Português <svg id="check-pt" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
           <button onclick="setLang('en')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4">
-            English <svg id="check-en" class="hidden" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            English <svg id="check-en" class="hidden" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
         </div>
       </div>
-      <!-- Auth -->
+      <button onclick="openAuthModal('login')" class="nav-btn-outline">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Entrar
+      </button>
+      <button onclick="openAuthModal('register')" class="nav-btn-lime">
+        Criar conta grátis
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+
+    <!-- App nav buttons (visible when logged in) -->
+    <div id="nav-app-btns" class="hidden items-center gap-2">
+      <button onclick="showModal('pix-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-full hover:bg-red-50 transition-colors">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        Apoiar <span style="background:#9AC000;" class="text-white text-xs px-1.5 py-0.5 rounded font-semibold">PIX</span>
+      </button>
+      <button onclick="showModal('feedback-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Feedback
+      </button>
+      <!-- Language (app) -->
       <div class="relative">
-        <button id="nav-login-btn" onclick="openAuthModal('login')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors font-medium">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Entrar
+        <button id="lang-btn-app" onclick="toggleDropdown('lang-dd-app')" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" title="Idioma">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         </button>
-        <button id="nav-user-btn" onclick="toggleDropdown('user-dd')" class="hidden items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
+        <div id="lang-dd-app" class="hidden absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50 min-w-[140px]">
+          <button onclick="setLang('pt')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4">
+            Português <svg id="check-pt-app" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button onclick="setLang('en')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4">
+            English <svg id="check-en-app" class="hidden" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <!-- User avatar -->
+      <div class="relative">
+        <button id="nav-user-btn" onclick="toggleDropdown('user-dd')" class="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
           <div class="user-avatar" id="nav-avatar">U</div>
           <span id="nav-email-short" class="text-sm text-gray-700 font-medium max-w-[120px] truncate hidden sm:block"></span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -95,186 +177,358 @@
   </div>
 </nav>
 
-<!-- ======================== BETA BANNER ======================== -->
-<div class="border border-amber-300 bg-amber-50 rounded-lg mx-4 mt-4 px-4 py-3 flex items-start gap-2">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" class="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  <p id="beta-text" class="text-amber-800 text-sm">⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.</p>
-</div>
+<!-- ======================== LANDING PAGE ======================== -->
+<div id="landing-page">
 
-<!-- ======================== MAIN ======================== -->
-<main class="max-w-screen-xl mx-auto px-4 mt-5 pb-16">
-  <p id="upload-label-text" class="text-sm font-medium text-gray-700 mb-3">Carregue seus arquivos ZPL para convertê-los para o formato PDF</p>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-    <!-- UPLOAD PANEL -->
-    <div id="drop-zone"
-         class="border-2 border-dashed border-gray-300 rounded-2xl bg-white p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[220px] select-none"
-         ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)"
-         onclick="document.getElementById('file-input').click()">
-      <div class="flex gap-3 mb-4">
-        <div class="w-12 h-12 rounded-xl border-2 border-green-500 flex items-center justify-center text-green-600 bg-green-50">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        </div>
-        <div class="w-12 h-12 rounded-xl border-2 border-green-500 flex items-center justify-center text-green-600 bg-green-50">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </div>
+  <!-- HERO -->
+  <section class="hero-gradient text-white py-20 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="hero-badge mb-6">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="#9AC000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Ferramenta gratuita para e-commerce
       </div>
-      <p id="drop-main-text" class="font-semibold text-gray-800 text-sm mb-1">Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)</p>
-      <p id="formats-text" class="text-gray-400 text-xs">Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL</p>
-      <p id="merge-hint-text" class="text-green-600 text-xs mt-1.5 font-medium">✓ Vários arquivos serão unidos em um único PDF</p>
-      <div class="mt-4 flex gap-2 items-center" onclick="event.stopPropagation()">
-        <button id="fmt-padrao" onclick="setFormat('Padrão')"
-          class="px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all">
-          Padrão (203dpi)
+      <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight mb-5" style="letter-spacing:-0.02em;">
+        Converta ZPL para PDF<br>
+        <span style="color:#9AC000;">em segundos</span>
+      </h1>
+      <p class="text-lg text-purple-200 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Transforme suas etiquetas ZPL em PDF de alta qualidade sem instalar nada. Perfeito para Shopee, Mercado Livre, VTEX e todos os marketplaces.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button onclick="openAuthModal('register')" class="btn-lime text-base px-8 py-4 rounded-xl" style="font-size:16px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          Criar conta grátis
         </button>
-        <button id="fmt-nitidez" onclick="setFormat('Nitidez+')"
-          class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all">
-          Nitidez+ (300dpi)
+        <button onclick="openAuthModal('login')" class="btn-outline-white text-base px-8 py-4 rounded-xl" style="font-size:16px;">
+          Já tenho uma conta
         </button>
       </div>
-      <input type="file" id="file-input" multiple accept=".txt,.zpl,.zip" class="hidden" onchange="handleFileInput(event)" />
+      <!-- Social proof -->
+      <p class="text-purple-300 text-sm mt-8 opacity-75">✓ Gratuito &nbsp;·&nbsp; ✓ Sem instalação &nbsp;·&nbsp; ✓ Histórico na nuvem</p>
     </div>
+  </section>
 
-    <!-- PREVIEW PANEL -->
-    <div id="preview-panel" class="bg-white rounded-2xl border border-gray-200 p-5 min-h-[220px] flex flex-col">
-      <div id="preview-empty" class="flex-1 flex flex-col items-center justify-center text-gray-400">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-2 opacity-40"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-        <p id="preview-empty-text" class="text-sm">Pré-visualização aparecerá aqui</p>
+  <!-- FEATURES -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl font-extrabold text-gray-900 mb-3">Por que usar o ZPL Easy?</h2>
+        <p class="text-gray-500 text-base max-w-xl mx-auto">Desenvolvido para vendedores online que precisam imprimir etiquetas com agilidade e sem complicação.</p>
       </div>
-      <div id="preview-content" class="hidden flex-1 flex flex-col">
-        <div class="flex items-center justify-between mb-3">
-          <span id="preview-title" class="text-sm font-semibold text-gray-800 truncate max-w-[200px]"></span>
-          <div class="flex items-center gap-2">
-            <span id="preview-page-info" class="text-xs text-gray-400"></span>
-            <button onclick="prevPreview()" class="p-1 hover:bg-gray-100 rounded transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <button onclick="nextPreview()" class="p-1 hover:bg-gray-100 rounded transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Card 1 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Conversão Instantânea</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Faça upload do arquivo ZPL e o PDF fica pronto em segundos. Nenhum software para instalar, tudo no seu navegador.</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.08 3.42 2 2 0 0 1 3.07 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Múltiplos Arquivos</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Converta vários arquivos ZPL de uma vez. Todos são unidos em um único PDF organizado para impressão em lote.</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Histórico na Nuvem</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Todas as suas conversões ficam salvas na sua conta. Acesse, visualize e baixe seus PDFs a qualquer hora, de qualquer dispositivo.</p>
+        </div>
+        <!-- Card 4 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Alta Qualidade</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Escolha entre 203 dpi (padrão) ou 300 dpi (Nitidez+) para etiquetas nítidas e legíveis em qualquer impressora térmica.</p>
+        </div>
+        <!-- Card 5 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Seguro e Privado</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Seus arquivos são processados com segurança. Cada usuário acessa apenas seus próprios dados e conversões.</p>
+        </div>
+        <!-- Card 6 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Compatível com ZIP</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Envie um arquivo ZIP com vários ZPLs dentro. O sistema extrai e converte tudo automaticamente para você.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="py-20 px-4" style="background:#f8f5ff;">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl font-extrabold text-gray-900 mb-3">Como funciona?</h2>
+        <p class="text-gray-500 text-base">Três passos simples para converter suas etiquetas ZPL.</p>
+      </div>
+      <div class="flex flex-col gap-0">
+        <!-- Step 1 -->
+        <div class="flex gap-5 items-start">
+          <div class="flex flex-col items-center">
+            <div class="step-num">1</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="pb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-1">Crie sua conta gratuita</h3>
+            <p class="text-gray-500 text-sm leading-relaxed">Faça seu cadastro em menos de 1 minuto com e-mail e senha. Sem cartão de crédito, totalmente grátis.</p>
           </div>
         </div>
-        <div class="flex-1 flex items-center justify-center overflow-hidden bg-gray-50 rounded-xl" style="min-height:160px;">
-          <img id="preview-img" src="" alt="Preview" class="max-h-full max-w-full object-contain rounded" style="max-height:260px;" />
+        <!-- Step 2 -->
+        <div class="flex gap-5 items-start">
+          <div class="flex flex-col items-center">
+            <div class="step-num">2</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="pb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-1">Faça upload dos seus arquivos ZPL</h3>
+            <p class="text-gray-500 text-sm leading-relaxed">Arraste e solte seus arquivos .zpl, .txt ou .zip na área de upload. Múltiplos arquivos são suportados ao mesmo tempo.</p>
+          </div>
+        </div>
+        <!-- Step 3 -->
+        <div class="flex gap-5 items-start">
+          <div class="flex flex-col items-center">
+            <div class="step-num">3</div>
+          </div>
+          <div class="pb-2">
+            <h3 class="text-lg font-bold text-gray-900 mb-1">Baixe seu PDF pronto para impressão</h3>
+            <p class="text-gray-500 text-sm leading-relaxed">Em segundos, seu PDF estará pronto. Visualize as etiquetas antes de baixar e guarde o histórico na nuvem.</p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- PROGRESS BAR -->
-  <div id="progress-bar-wrap" class="hidden mt-4 bg-white rounded-xl border border-gray-200 px-4 py-3">
-    <div class="flex items-center justify-between mb-1.5">
-      <span id="progress-label" class="text-xs text-gray-600 font-medium"></span>
-      <span id="progress-pct" class="text-xs text-gray-400"></span>
-    </div>
-    <div class="w-full bg-gray-100 rounded-full h-2">
-      <div id="progress-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
-    </div>
-  </div>
-
-  <!-- ===== HISTORY SECTION ===== -->
-  <div id="history-section" class="mt-8 hidden">
-
-    <!-- Header verde -->
-    <div class="bg-green-600 rounded-t-2xl px-5 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="12 5 12 12 16 14"/><circle cx="12" cy="12" r="10"/></svg>
-        <span id="hist-title" class="text-white font-semibold text-sm">Histórico de Processamento</span>
-      </div>
-      <span id="hist-total-badge" class="text-green-100 text-xs font-medium"></span>
-    </div>
-
-    <!-- Resumo -->
-    <div class="bg-green-50 border-x border-green-100 px-5 py-2.5 flex items-center gap-4 flex-wrap">
-      <div class="flex items-center gap-1.5 text-green-700 text-xs font-medium">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span id="hist-summary-labels"></span>
-      </div>
-      <span class="text-green-300">•</span>
-      <div class="flex items-center gap-1.5 text-green-700 text-xs font-medium">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        <span id="hist-summary-convs"></span>
-      </div>
-    </div>
-
-    <!-- Filtros e busca -->
-    <div class="bg-white border-x border-gray-200 px-5 py-3 flex items-center gap-3 flex-wrap">
-      <div class="flex-1 min-w-[160px] relative">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" class="absolute left-3 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="hist-search" type="text" placeholder="Buscar..." oninput="renderHistory()"
-          class="w-full pl-8 pr-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:border-green-400 bg-gray-50" />
-      </div>
-      <!-- Date filter -->
-      <div class="relative">
-        <button onclick="toggleDropdown('date-filter-dd')" class="filter-btn">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <span id="date-filter-label">Todas as datas</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div id="date-filter-dd" class="filter-dd hidden">
-          <button onclick="setDateFilter('all')" class="active">Todas as datas</button>
-          <button onclick="setDateFilter('today')">Hoje</button>
-          <button onclick="setDateFilter('week')">Esta semana</button>
-          <button onclick="setDateFilter('month')">Este mês</button>
-        </div>
-      </div>
-      <!-- Status filter -->
-      <div class="relative">
-        <button onclick="toggleDropdown('type-filter-dd')" class="filter-btn">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          <span id="type-filter-label">Todos os tipos</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div id="type-filter-dd" class="filter-dd hidden">
-          <button onclick="setTypeFilter('all')" class="active">Todos os tipos</button>
-          <button onclick="setTypeFilter('ok')">✓ Pronto</button>
-          <button onclick="setTypeFilter('err')">✗ Erro</button>
-        </div>
-      </div>
-      <!-- Clear -->
-      <button onclick="clearHistory()" class="filter-btn text-red-400 border-red-100 hover:bg-red-50 ml-auto">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        Limpar
+  <!-- CTA SECTION -->
+  <section class="cta-section py-20 px-4 text-white text-center">
+    <div class="max-w-2xl mx-auto">
+      <h2 class="text-3xl font-extrabold mb-4">Pronto para começar?</h2>
+      <p class="text-purple-200 text-base mb-8 leading-relaxed">Junte-se a centenas de vendedores que já usam o ZPL Easy para agilizar sua operação de etiquetas.</p>
+      <button onclick="openAuthModal('register')" class="btn-lime text-base px-10 py-4 rounded-xl" style="font-size:16px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Criar minha conta grátis
       </button>
+      <p class="text-purple-300 text-sm mt-4 opacity-70">Grátis para sempre · Sem cartão de crédito</p>
     </div>
+  </section>
 
-    <!-- Tabela -->
-    <div class="bg-white rounded-b-2xl border border-gray-200 border-t-0 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-gray-100 bg-gray-50">
-            <th id="th-date"   class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</th>
-            <th id="th-labels" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantidade de Etiquetas</th>
-            <th id="th-format" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Formato de Impressão</th>
-            <th id="th-time"   class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Processando...</th>
-            <th id="th-status" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-            <th class="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody id="history-body"></tbody>
-      </table>
-
-      <!-- Empty state -->
-      <div id="hist-empty-state" class="hidden py-10 text-center text-gray-400">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-2 opacity-40"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <p class="text-sm">Nenhuma conversão encontrada</p>
+  <!-- FOOTER -->
+  <footer class="land-footer py-10 px-4">
+    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <div style="width:26px;height:26px;background:#5B0C8C;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        </div>
+        <span style="color:#9AC000;" class="font-bold text-base">ZPL Easy</span>
       </div>
-
-      <!-- Pagination -->
-      <div id="hist-pagination" class="hidden border-t border-gray-100 px-5 py-3 flex items-center justify-center gap-2">
+      <p class="text-sm text-center">Conversor ZPL para PDF gratuito · Feito com ❤️ para vendedores online</p>
+      <div class="flex gap-4 text-sm">
+        <button onclick="openAuthModal('login')" class="hover:text-white transition-colors">Entrar</button>
+        <button onclick="openAuthModal('register')" style="color:#9AC000;" class="font-medium hover:opacity-80 transition-opacity">Criar conta</button>
       </div>
     </div>
+  </footer>
 
-    <!-- Note -->
-    <p class="text-xs text-gray-400 mt-2 px-1">Registros com mais de 60 dias são excluídos automaticamente.</p>
+</div><!-- end #landing-page -->
+
+<!-- ======================== APP PAGE ======================== -->
+<div id="app-page" class="hidden">
+  <!-- BETA BANNER -->
+  <div class="border border-amber-300 bg-amber-50 rounded-lg mx-4 mt-4 px-4 py-3 flex items-start gap-2">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" class="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <p id="beta-text" class="text-amber-800 text-sm">⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.</p>
   </div>
-</main>
+
+  <!-- MAIN APP CONTENT -->
+  <main class="max-w-screen-xl mx-auto px-4 mt-5 pb-16">
+    <p id="upload-label-text" class="text-sm font-medium text-gray-700 mb-3">Carregue seus arquivos ZPL para convertê-los para o formato PDF</p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <!-- UPLOAD PANEL -->
+      <div id="drop-zone"
+           class="border-2 border-dashed border-gray-300 rounded-2xl bg-white p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[220px] select-none"
+           ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)"
+           onclick="document.getElementById('file-input').click()">
+        <div class="flex gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl border-2 flex items-center justify-center" style="border-color:#5B0C8C;color:#5B0C8C;background:#f3e8ff;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="w-12 h-12 rounded-xl border-2 flex items-center justify-center" style="border-color:#5B0C8C;color:#5B0C8C;background:#f3e8ff;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </div>
+        </div>
+        <p id="drop-main-text" class="font-semibold text-gray-800 text-sm mb-1">Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)</p>
+        <p id="formats-text" class="text-gray-400 text-xs">Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL</p>
+        <p id="merge-hint-text" class="text-xs mt-1.5 font-medium" style="color:#5B0C8C;">✓ Vários arquivos serão unidos em um único PDF</p>
+        <div class="mt-4 flex gap-2 items-center" onclick="event.stopPropagation()">
+          <button id="fmt-padrao" onclick="setFormat('Padrão')"
+            class="px-3 py-1.5 text-xs rounded-lg font-medium transition-all"
+            style="border:1px solid #5B0C8C;background:#f3e8ff;color:#5B0C8C;">
+            Padrão (203dpi)
+          </button>
+          <button id="fmt-nitidez" onclick="setFormat('Nitidez+')"
+            class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all">
+            Nitidez+ (300dpi)
+          </button>
+        </div>
+        <input type="file" id="file-input" multiple accept=".txt,.zpl,.zip" class="hidden" onchange="handleFileInput(event)" />
+      </div>
+
+      <!-- PREVIEW PANEL -->
+      <div id="preview-panel" class="bg-white rounded-2xl border border-gray-200 p-5 min-h-[220px] flex flex-col">
+        <div id="preview-empty" class="flex-1 flex flex-col items-center justify-center text-gray-400">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-2 opacity-40"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          <p id="preview-empty-text" class="text-sm">Pré-visualização aparecerá aqui</p>
+        </div>
+        <div id="preview-content" class="hidden flex-1 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <span id="preview-title" class="text-sm font-semibold text-gray-800 truncate max-w-[200px]"></span>
+            <div class="flex items-center gap-2">
+              <span id="preview-page-info" class="text-xs text-gray-400"></span>
+              <button onclick="prevPreview()" class="p-1 hover:bg-gray-100 rounded transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button onclick="nextPreview()" class="p-1 hover:bg-gray-100 rounded transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="flex-1 flex items-center justify-center overflow-hidden bg-gray-50 rounded-xl" style="min-height:160px;">
+            <img id="preview-img" src="" alt="Preview" class="max-h-full max-w-full object-contain rounded" style="max-height:260px;" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div id="progress-bar-wrap" class="hidden mt-4 bg-white rounded-xl border border-gray-200 px-4 py-3">
+      <div class="flex items-center justify-between mb-1.5">
+        <span id="progress-label" class="text-xs text-gray-600 font-medium"></span>
+        <span id="progress-pct" class="text-xs text-gray-400"></span>
+      </div>
+      <div class="w-full bg-gray-100 rounded-full h-2">
+        <div id="progress-bar" class="h-2 rounded-full transition-all duration-300" style="width:0%;background:#5B0C8C;"></div>
+      </div>
+    </div>
+
+    <!-- ===== HISTORY SECTION ===== -->
+    <div id="history-section" class="mt-8 hidden">
+
+      <!-- Header -->
+      <div class="rounded-t-2xl px-5 py-4 flex items-center justify-between" style="background:#5B0C8C;">
+        <div class="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="12 5 12 12 16 14"/><circle cx="12" cy="12" r="10"/></svg>
+          <span id="hist-title" class="text-white font-semibold text-sm">Histórico de Processamento</span>
+        </div>
+        <span id="hist-total-badge" class="text-purple-200 text-xs font-medium"></span>
+      </div>
+
+      <!-- Summary -->
+      <div class="border-x px-5 py-2.5 flex items-center gap-4 flex-wrap" style="background:#f5f0ff;border-color:#e8d8f8;">
+        <div class="flex items-center gap-1.5 text-xs font-medium" style="color:#5B0C8C;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span id="hist-summary-labels"></span>
+        </div>
+        <span style="color:#d8b4fe;">•</span>
+        <div class="flex items-center gap-1.5 text-xs font-medium" style="color:#5B0C8C;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span id="hist-summary-convs"></span>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="bg-white border-x border-gray-200 px-5 py-3 flex items-center gap-3 flex-wrap">
+        <div class="flex-1 min-w-[160px] relative">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" class="absolute left-3 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="hist-search" type="text" placeholder="Buscar..." oninput="renderHistory()"
+            class="w-full pl-8 pr-3 py-2 text-xs border border-gray-200 rounded-lg outline-none bg-gray-50"
+            style="transition:border-color 0.15s;" onfocus="this.style.borderColor='#5B0C8C'" onblur="this.style.borderColor='#e5e7eb'" />
+        </div>
+        <!-- Date filter -->
+        <div class="relative">
+          <button onclick="toggleDropdown('date-filter-dd')" class="filter-btn">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="date-filter-label">Todas as datas</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="date-filter-dd" class="filter-dd hidden">
+            <button onclick="setDateFilter('all')" class="active">Todas as datas</button>
+            <button onclick="setDateFilter('today')">Hoje</button>
+            <button onclick="setDateFilter('week')">Esta semana</button>
+            <button onclick="setDateFilter('month')">Este mês</button>
+          </div>
+        </div>
+        <!-- Status filter -->
+        <div class="relative">
+          <button onclick="toggleDropdown('type-filter-dd')" class="filter-btn">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <span id="type-filter-label">Todos os tipos</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="type-filter-dd" class="filter-dd hidden">
+            <button onclick="setTypeFilter('all')" class="active">Todos os tipos</button>
+            <button onclick="setTypeFilter('ok')">✓ Pronto</button>
+            <button onclick="setTypeFilter('err')">✗ Erro</button>
+          </div>
+        </div>
+        <!-- Clear -->
+        <button onclick="clearHistory()" class="filter-btn text-red-400 border-red-100 hover:bg-red-50 ml-auto">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          Limpar
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-b-2xl border border-gray-200 border-t-0 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-100 bg-gray-50">
+              <th id="th-date"   class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</th>
+              <th id="th-labels" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantidade de Etiquetas</th>
+              <th id="th-format" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Formato de Impressão</th>
+              <th id="th-time"   class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Processando...</th>
+              <th id="th-status" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+
+        <!-- Empty state -->
+        <div id="hist-empty-state" class="hidden py-10 text-center text-gray-400">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-2 opacity-40"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <p class="text-sm">Nenhuma conversão encontrada</p>
+        </div>
+
+        <!-- Pagination -->
+        <div id="hist-pagination" class="hidden border-t border-gray-100 px-5 py-3 flex items-center justify-center gap-2">
+        </div>
+      </div>
+
+      <!-- Note -->
+      <p class="text-xs text-gray-400 mt-2 px-1">Registros com mais de 60 dias são excluídos automaticamente.</p>
+    </div>
+  </main>
+</div><!-- end #app-page -->
 
 <!-- ======================== VIEW MODAL ======================== -->
 <div id="view-modal" class="modal-overlay hidden" style="padding:16px;">
   <div style="background:#fff;border-radius:16px;width:100%;max-width:960px;height:92vh;position:relative;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.35);">
     <!-- Header -->
-    <div style="background:#16a34a;padding:13px 18px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="background:#5B0C8C;padding:13px 18px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:8px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         <span id="vm-title" style="color:white;font-weight:600;font-size:14px;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
@@ -291,7 +545,7 @@
     </div>
     <!-- Loading state -->
     <div id="vm-loading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#9ca3af;background:#f8fafc;">
-      <svg class="spin" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      <svg class="spin" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5B0C8C" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
       <span style="font-size:13px;color:#6b7280;">Carregando PDF...</span>
     </div>
     <!-- Error state -->
@@ -299,7 +553,7 @@
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <p style="font-size:13px;color:#6b7280;">Prévia não disponível para este item.</p>
     </div>
-    <!-- PDF iframe (native browser PDF viewer) -->
+    <!-- PDF iframe -->
     <iframe id="vm-iframe" src="about:blank" style="display:none;flex:1;border:none;width:100%;min-height:0;" allow="fullscreen"></iframe>
   </div>
 </div>
@@ -311,7 +565,7 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div class="mb-5 text-center">
-      <span class="text-xl font-bold text-gray-900">ZPL Easy</span>
+      <span class="text-xl font-bold" style="color:#5B0C8C;">ZPL <span style="color:#9AC000;">Easy</span></span>
       <p class="text-gray-500 text-sm mt-1">Salve seu histórico na nuvem</p>
     </div>
     <div class="flex gap-0 border-b border-gray-200 mb-5">
@@ -322,17 +576,17 @@
       <div class="mb-3"><label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label><input id="login-email" type="email" placeholder="seu@email.com" class="input-field" autocomplete="email" /></div>
       <div class="mb-4"><label class="block text-xs font-medium text-gray-600 mb-1">Senha</label><input id="login-password" type="password" placeholder="••••••••" class="input-field" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
       <p id="login-error" class="text-red-500 text-xs mb-3 hidden"></p>
-      <button onclick="doLogin()" id="btn-login" class="btn-green">Entrar</button>
-      <p class="text-center text-xs text-gray-400 mt-3">Não tem conta? <button onclick="switchAuthTab('register')" class="text-green-600 font-medium hover:underline">Criar agora</button></p>
+      <button onclick="doLogin()" id="btn-login" class="btn-primary">Entrar</button>
+      <p class="text-center text-xs text-gray-400 mt-3">Não tem conta? <button onclick="switchAuthTab('register')" class="font-medium hover:underline" style="color:#5B0C8C;">Criar agora</button></p>
     </div>
     <div id="form-register" class="hidden">
       <div class="mb-3"><label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label><input id="reg-email" type="email" placeholder="seu@email.com" class="input-field" /></div>
       <div class="mb-3"><label class="block text-xs font-medium text-gray-600 mb-1">Senha</label><input id="reg-password" type="password" placeholder="Mínimo 6 caracteres" class="input-field" /></div>
       <div class="mb-4"><label class="block text-xs font-medium text-gray-600 mb-1">Confirmar senha</label><input id="reg-confirm" type="password" placeholder="Repita a senha" class="input-field" onkeydown="if(event.key==='Enter')doRegister()" /></div>
       <p id="reg-error" class="text-red-500 text-xs mb-3 hidden"></p>
-      <p id="reg-success" class="text-green-600 text-xs mb-3 hidden"></p>
-      <button onclick="doRegister()" id="btn-register" class="btn-green">Criar conta</button>
-      <p class="text-center text-xs text-gray-400 mt-3">Já tem conta? <button onclick="switchAuthTab('login')" class="text-green-600 font-medium hover:underline">Entrar</button></p>
+      <p id="reg-success" class="text-xs mb-3 hidden" style="color:#5B0C8C;"></p>
+      <button onclick="doRegister()" id="btn-register" class="btn-primary">Criar conta</button>
+      <p class="text-center text-xs text-gray-400 mt-3">Já tem conta? <button onclick="switchAuthTab('login')" class="font-medium hover:underline" style="color:#5B0C8C;">Entrar</button></p>
     </div>
   </div>
 </div>
@@ -345,7 +599,7 @@
     <h3 class="text-lg font-bold text-gray-900 mb-1">Apoiar o ZPL Easy</h3>
     <p class="text-sm text-gray-500 mb-4">Esta ferramenta é gratuita e mantida com muito carinho. Se ela te ajudou, considere uma contribuição via PIX:</p>
     <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-4"><p class="text-xs text-gray-400 mb-1">Chave PIX (e-mail)</p><p class="font-mono text-sm font-semibold text-gray-800 select-all">exemplo@email.com</p></div>
-    <button onclick="hideModal('pix-modal')" class="btn-green">Fechar</button>
+    <button onclick="hideModal('pix-modal')" class="btn-primary">Fechar</button>
   </div>
 </div>
 
@@ -356,7 +610,7 @@
     <h3 class="text-lg font-bold text-gray-900 mb-1">Feedback</h3>
     <p class="text-sm text-gray-500 mb-3">Sua opinião nos ajuda a melhorar o ZPL Easy.</p>
     <textarea id="feedback-text" rows="4" placeholder="Descreva sua experiência, problemas ou sugestões..." class="input-field resize-none mb-3"></textarea>
-    <button onclick="submitFeedback()" class="btn-green">Enviar</button>
+    <button onclick="submitFeedback()" class="btn-primary">Enviar</button>
   </div>
 </div>
 
@@ -379,20 +633,53 @@ const APP = {
   previewIdx: 0,
   selectedFormat: 'Padrão',
   user: null,
-  // filters
   dateFilter: 'all',
   typeFilter: 'all',
   histPage: 1,
   PAGE_SIZE: 10,
 };
 
+// ====== NAV / PAGE TOGGLE ======
+function goHome(e) {
+  e && e.preventDefault();
+  if (!APP.user) {
+    document.getElementById('landing-page').classList.remove('hidden');
+    document.getElementById('app-page').classList.add('hidden');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+}
+
+function updateNavAuth() {
+  const isLoggedIn = !!APP.user;
+  const landingBtns = document.getElementById('nav-landing-btns');
+  const appBtns = document.getElementById('nav-app-btns');
+
+  // Nav buttons
+  landingBtns.style.display = isLoggedIn ? 'none' : 'flex';
+  if (isLoggedIn) {
+    appBtns.classList.remove('hidden');
+    appBtns.classList.add('flex');
+  } else {
+    appBtns.classList.add('hidden');
+    appBtns.classList.remove('flex');
+  }
+
+  // Page sections
+  document.getElementById('landing-page').classList.toggle('hidden', isLoggedIn);
+  document.getElementById('app-page').classList.toggle('hidden', !isLoggedIn);
+
+  if (isLoggedIn) {
+    const email = APP.user.email || '';
+    document.getElementById('nav-avatar').textContent = email.substring(0,2).toUpperCase();
+    document.getElementById('nav-email-short').textContent = email;
+    document.getElementById('dd-email').textContent = email;
+  }
+}
+
 // ====== AUTH ======
 async function initAuth() {
-  // Handle email confirmation / magic link token in URL hash
-  // Supabase embeds #access_token=... when redirecting from confirmation email
   if (window.location.hash && window.location.hash.includes('access_token')) {
     const { data, error } = await sb.auth.getSession();
-    // Clean the hash from the URL without reloading
     history.replaceState(null, '', window.location.pathname);
     if (!error && data.session) {
       APP.user = data.session.user;
@@ -411,7 +698,6 @@ async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) { APP.user = session.user; updateNavAuth(); await loadHistory(); }
   sb.auth.onAuthStateChange(async (event, session) => {
-    // Only act on real sign-in/sign-out — ignore TOKEN_REFRESHED and MFA_CHALLENGE
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
       APP.user = session ? session.user : null;
       updateNavAuth();
@@ -422,26 +708,9 @@ async function initAuth() {
       APP.history = [];
       renderHistory();
     } else if (event === 'TOKEN_REFRESHED' && session) {
-      // Just update the user reference silently, don't reload history
       APP.user = session.user;
     }
   });
-}
-
-function updateNavAuth() {
-  const loginBtn = document.getElementById('nav-login-btn');
-  const userBtn  = document.getElementById('nav-user-btn');
-  if (APP.user) {
-    loginBtn.classList.add('hidden');
-    userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
-    const email = APP.user.email || '';
-    document.getElementById('nav-avatar').textContent = email.substring(0,2).toUpperCase();
-    document.getElementById('nav-email-short').textContent = email;
-    document.getElementById('dd-email').textContent = email;
-  } else {
-    loginBtn.classList.remove('hidden');
-    userBtn.classList.add('hidden'); userBtn.classList.remove('flex');
-  }
 }
 
 async function handleLogout() {
@@ -530,14 +799,6 @@ async function downloadCloudPdf(id, filename) {
   setTimeout(()=>URL.revokeObjectURL(url),5000);
 }
 
-// ====== LOCAL HISTORY (fallback) ======
-function loadLocalHistory() {
-  try { APP.history=JSON.parse(localStorage.getItem('zpl_history')||'[]'); renderHistory(); } catch(e){APP.history=[];}
-}
-function saveLocalHistory() {
-  try { localStorage.setItem('zpl_history',JSON.stringify(APP.history.slice(0,100).map(h=>({...h,pdf:undefined,previewBlobs:undefined})))); } catch(e){}
-}
-
 // ====== ZPL PROCESSING ======
 function isPrintableLabel(block) {
   const inner=block.replace(/\^XA|\^XZ|\^FS/gi,'').replace(/\s+/g,'');
@@ -586,28 +847,22 @@ async function extractZplFiles(file) {
   return [{name:file.name,content:await file.text()}];
 }
 
-// ====== PROCESS FILES (todos viram 1 PDF) ======
+// ====== PROCESS FILES ======
 async function processFiles(files) {
+  if (!APP.user) { openAuthModal('login'); return; }
+
   const fmt = APP.selectedFormat || 'Padrão';
   const dpmm = fmt === 'Nitidez+' ? 12 : 8;
   const w = 4, h = 6;
 
   showProgressBar(true);
-
-  // Extrair todos os ZPLs
   let allFiles = [];
   for (const f of files) allFiles = allFiles.concat(await extractZplFiles(f));
   const fileCount = allFiles.length;
-
-  // Nome do lote
-  const batchName = fileCount === 1
-    ? allFiles[0].name
-    : `${fileCount} arquivos`;
-
+  const batchName = fileCount === 1 ? allFiles[0].name : `${fileCount} arquivos`;
   const start = Date.now();
   const batchKey = Date.now();
 
-  // Entrada "em processamento"
   const procItem = { _key: batchKey, filename: batchName, fileCount, labelCount: 0, format: fmt, time: 0, status: 'proc', createdAt: new Date().toISOString() };
   APP.history.unshift(procItem);
   renderHistory();
@@ -635,7 +890,6 @@ async function processFiles(files) {
 
     if (!imgs.length) throw new Error('A API Labelary não conseguiu gerar nenhuma imagem de nenhum arquivo.');
 
-    // Gerar PDF único
     updateProgress(APP.lang === 'pt' ? 'Gerando PDF...' : 'Generating PDF...', 1, 1);
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'in', format: [w, h], orientation: 'portrait' });
@@ -649,12 +903,10 @@ async function processFiles(files) {
     const doneItem = { _key: batchKey, filename: batchName, fileCount, labelCount: totalLabels, format: fmt, time: parseFloat(elapsed), status: 'ok', pdf: pdfBlob, previewBlobs, createdAt: new Date().toISOString() };
     replaceHistoryItem(batchKey, doneItem);
 
-    // Preview
     APP.previewImgs = previewBlobs.map(b => URL.createObjectURL(b));
     APP.previewIdx = 0;
     showPreview(batchName, previewBlobs);
 
-    // Cloud / local
     if (APP.user) {
       const cloudId = await saveConversionToCloud(doneItem, pdfBlob);
       if (cloudId) {
@@ -662,8 +914,6 @@ async function processFiles(files) {
         if (idx >= 0) { APP.history[idx].id = cloudId; APP.history[idx].cloudPdf = true; }
         renderHistory();
       }
-    } else {
-      saveLocalHistory();
     }
 
   } catch(err) {
@@ -671,7 +921,6 @@ async function processFiles(files) {
     const errItem = { _key: batchKey, filename: batchName, fileCount, labelCount: 0, format: fmt, time: parseFloat(elapsed), status: 'err', error: err.message, createdAt: new Date().toISOString() };
     replaceHistoryItem(batchKey, errItem);
     if (APP.user) await saveConversionToCloud(errItem, null);
-    else saveLocalHistory();
   }
 
   showProgressBar(false);
@@ -687,14 +936,10 @@ function replaceHistoryItem(key, newItem) {
 function getFilteredHistory() {
   const search = (document.getElementById('hist-search')?.value || '').toLowerCase();
   const now = new Date();
-
   return APP.history.filter(item => {
-    // search
     if (search && !item.filename.toLowerCase().includes(search)) return false;
-    // type
     if (APP.typeFilter === 'ok' && item.status !== 'ok') return false;
     if (APP.typeFilter === 'err' && item.status !== 'err') return false;
-    // date
     if (APP.dateFilter !== 'all' && item.createdAt) {
       const d = new Date(item.createdAt);
       if (APP.dateFilter === 'today') {
@@ -720,7 +965,6 @@ function renderHistory() {
   if (!APP.history.length) { section.classList.add('hidden'); return; }
   section.classList.remove('hidden');
 
-  // Summary stats (always from all history)
   const totalLabels = APP.history.filter(h => h.status === 'ok').reduce((s,h) => s + (h.labelCount||0), 0);
   const totalConvs = APP.history.length;
   document.getElementById('hist-total-badge').textContent = `Total: ${totalConvs} ${APP.lang==='pt'?'registro'+(totalConvs!==1?'s':''):'record'+(totalConvs!==1?'s':'')}`;
@@ -736,20 +980,18 @@ function renderHistory() {
   body.innerHTML = '';
   emptyState.classList.toggle('hidden', pageItems.length > 0);
 
-  pageItems.forEach((item, idx) => {
+  pageItems.forEach((item) => {
     const realIdx = APP.history.indexOf(item);
     const tr = document.createElement('tr');
     tr.className = 'hist-row';
 
-    // Date
     const date = item.createdAt ? new Date(item.createdAt) : null;
     const dateStr = date
       ? date.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) + '\n' + date.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
       : '–';
 
-    // Label count badge
     const labelBadge = item.status === 'ok'
-      ? `<span class="tag-badge" style="background:#dcfce7;color:#15803d;">
+      ? `<span class="tag-badge" style="background:#f3e8ff;color:#5B0C8C;">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
           ${item.labelCount}
         </span>`
@@ -757,37 +999,32 @@ function renderHistory() {
       ? `<span class="tag-badge" style="background:#fef3c7;color:#d97706;"><svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>–</span>`
       : `<span class="tag-badge" style="background:#fee2e2;color:#dc2626;">–</span>`;
 
-    // Format badge
     const fmtColor = item.format === 'Nitidez+' ? 'background:#e0f2fe;color:#0369a1' : 'background:#ede9fe;color:#7c3aed';
     const fmtBadge = `<span class="tag-badge" style="${fmtColor};">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       ${item.format || 'Padrão'}
     </span>`;
 
-    // Time badge
     const timeStr = item.time ? `<span class="tag-badge" style="background:#f3f4f6;color:#374151;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${item.time}s</span>` : '–';
 
-    // Status badge
     const statusBadge = item.status === 'ok'
       ? `<span class="tag-badge" style="background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${APP.lang==='pt'?'Pronto':'Done'}</span>`
       : item.status === 'err'
       ? `<span class="tag-badge" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;" title="${item.error||''}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>${APP.lang==='pt'?'Erro':'Error'}</span>`
       : `<span class="tag-badge" style="background:#fef3c7;color:#d97706;"><svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>${APP.lang==='pt'?'Processando':'Processing'}</span>`;
 
-    // Actions
     const hasLocalPdf = item.pdf && item.status === 'ok';
     const hasCloudPdf = item.cloudPdf && item.id && item.status === 'ok';
     const canDownload = hasLocalPdf || hasCloudPdf;
-
     const canView = (item.previewBlobs && item.previewBlobs.length) || hasLocalPdf || hasCloudPdf;
 
     const viewBtn = canView
-      ? `<button onclick="viewItem(${realIdx})" title="${APP.lang==='pt'?'Visualizar etiquetas':'View labels'}" class="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors">
+      ? `<button onclick="viewItem(${realIdx})" title="${APP.lang==='pt'?'Visualizar etiquetas':'View labels'}" class="p-1.5 rounded-lg transition-colors" style="color:#5B0C8C;" onmouseover="this.style.background='#f3e8ff'" onmouseout="this.style.background='transparent'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>` : '';
 
     const downloadBtn = canDownload
-      ? `<button onclick="downloadItem(${realIdx})" title="${APP.lang==='pt'?'Baixar PDF':'Download PDF'}" class="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
+      ? `<button onclick="downloadItem(${realIdx})" title="${APP.lang==='pt'?'Baixar PDF':'Download PDF'}" class="p-1.5 rounded-lg transition-colors" style="color:#9AC000;" onmouseover="this.style.background='#f0f8d6'" onmouseout="this.style.background='transparent'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>` : '';
 
@@ -820,12 +1057,13 @@ function renderHistory() {
     const pg = (n, label, active, disabled) => {
       const btn = document.createElement('button');
       btn.innerHTML = label;
-      btn.className = `px-3 py-1.5 text-xs rounded-lg border transition-colors ${active ? 'bg-green-600 text-white border-green-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`;
+      btn.className = `px-3 py-1.5 text-xs rounded-lg border transition-colors ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`;
+      if (active) { btn.style.background='#5B0C8C'; btn.style.color='#fff'; btn.style.borderColor='#5B0C8C'; }
+      else { btn.style.background='#fff'; btn.style.borderColor='#e5e7eb'; btn.style.color='#374151'; }
       if (!disabled && !active) btn.onclick = () => { APP.histPage = n; renderHistory(); scrollToHistory(); };
       return btn;
     };
     paginationEl.appendChild(pg(APP.histPage-1, APP.lang==='pt'?'&lsaquo; Anterior':'&lsaquo; Prev', false, APP.histPage<=1));
-    // page numbers
     for (let p = 1; p <= totalPages; p++) {
       if (totalPages <= 7 || Math.abs(p - APP.histPage) <= 2 || p === 1 || p === totalPages) {
         paginationEl.appendChild(pg(p, p, p === APP.histPage, false));
@@ -847,47 +1085,32 @@ async function viewItem(idx) {
   const item = APP.history[idx];
   if (!item) return;
   VM.idx = idx;
-
-  // Revoke previous blob URL to free memory
   if (VM.blobUrl) { URL.revokeObjectURL(VM.blobUrl); VM.blobUrl = null; }
-
-  // Set title
   document.getElementById('vm-title').textContent = item.filename || 'Etiquetas';
-
-  // Show/hide download button
   const canDl = (item.pdf || (item.cloudPdf && item.id)) && item.status === 'ok';
   document.getElementById('vm-download-btn').style.display = canDl ? 'flex' : 'none';
-
   showModal('view-modal');
   vmSetState('loading');
 
   let pdfBlob = null;
-
-  // Source 1: local PDF blob (freshly converted, still in memory)
   if (item.pdf) {
     pdfBlob = item.pdf;
-  }
-  // Source 2: cloud PDF → download from Supabase Storage
-  else if (item.cloudPdf && item.id && APP.user) {
+  } else if (item.cloudPdf && item.id && APP.user) {
     const { data, error } = await sb.storage.from('pdfs').download(`${APP.user.id}/${item.id}.pdf`);
     if (!error && data) pdfBlob = data;
-  }
-  // Source 3: rebuild PDF from in-memory preview PNGs
-  else if (item.previewBlobs && item.previewBlobs.length) {
+  } else if (item.previewBlobs && item.previewBlobs.length) {
     pdfBlob = await vmBuildPdfFromBlobs(item.previewBlobs);
   }
 
   if (pdfBlob) {
     VM.blobUrl = URL.createObjectURL(pdfBlob);
-    const iframe = document.getElementById('vm-iframe');
-    iframe.src = VM.blobUrl;
+    document.getElementById('vm-iframe').src = VM.blobUrl;
     vmSetState('iframe');
   } else {
     vmSetState('error');
   }
 }
 
-// Rebuild a PDF from an array of PNG blobs (fallback)
 async function vmBuildPdfFromBlobs(blobs) {
   try {
     const { jsPDF } = window.jspdf;
@@ -909,14 +1132,12 @@ function vmSetState(state) {
 
 function vmDownload() { downloadItem(VM.idx); }
 
-// Close modal cleans up blob URL
 function vmClose() {
   hideModal('view-modal');
   if (VM.blobUrl) { URL.revokeObjectURL(VM.blobUrl); VM.blobUrl = null; }
   document.getElementById('vm-iframe').src = 'about:blank';
 }
 
-// Keyboard: Escape closes view modal
 document.addEventListener('keydown', e => {
   const modal = document.getElementById('view-modal');
   if (modal && !modal.classList.contains('hidden')) {
@@ -942,7 +1163,6 @@ async function deleteItem(idx) {
   if (!item) return;
   if (APP.user && item.id) await deleteCloudConversion(item.id);
   APP.history.splice(idx, 1);
-  if (!APP.user) saveLocalHistory();
   renderHistory();
 }
 
@@ -951,7 +1171,6 @@ async function clearHistory() {
     for (const h of APP.history.filter(h=>h.id)) await deleteCloudConversion(h.id);
   }
   APP.history = [];
-  if (!APP.user) localStorage.removeItem('zpl_history');
   renderHistory();
 }
 
@@ -993,10 +1212,12 @@ function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-z
 function handleDragLeave() { document.getElementById('drop-zone').classList.remove('drop-active'); }
 function handleDrop(e) {
   e.preventDefault(); document.getElementById('drop-zone').classList.remove('drop-active');
+  if (!APP.user) { openAuthModal('login'); return; }
   const files = Array.from(e.dataTransfer.files).filter(f=>/\.(txt|zpl|zip)$/i.test(f.name));
   if (files.length) processFiles(files);
 }
 function handleFileInput(e) {
+  if (!APP.user) { openAuthModal('login'); e.target.value=''; return; }
   const files = Array.from(e.target.files);
   if (files.length) processFiles(files);
   e.target.value = '';
@@ -1007,11 +1228,13 @@ function setFormat(fmt) {
   APP.selectedFormat = fmt;
   const p = document.getElementById('fmt-padrao'), n = document.getElementById('fmt-nitidez');
   if (fmt === 'Padrão') {
-    p.className = 'px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all';
+    p.style.cssText = 'border:1px solid #5B0C8C;background:#f3e8ff;color:#5B0C8C;';
     n.className = 'px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all';
+    n.style.cssText = '';
   } else {
-    n.className = 'px-3 py-1.5 text-xs rounded-lg border border-blue-500 bg-blue-50 text-blue-700 font-medium transition-all';
+    n.style.cssText = 'border:1px solid #0369a1;background:#e0f2fe;color:#0369a1;';
     p.className = 'px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all';
+    p.style.cssText = '';
   }
 }
 
@@ -1036,8 +1259,7 @@ function toggleDropdown(ddId) {
   const dd = document.getElementById(ddId);
   if (!dd) return;
   const wasHidden = dd.classList.contains('hidden');
-  // close all dropdowns first
-  document.querySelectorAll('.filter-dd, #lang-dd, #user-dd').forEach(d => d.classList.add('hidden'));
+  document.querySelectorAll('.filter-dd, #lang-dd, #lang-dd-app, #user-dd').forEach(d => d.classList.add('hidden'));
   if (wasHidden) dd.classList.remove('hidden');
 }
 function closeDropdown(ddId) {
@@ -1066,23 +1288,35 @@ function setLang(lang) {
   localStorage.setItem('zpl_lang', lang);
   document.documentElement.lang = lang;
   closeDropdown('lang-dd');
+  closeDropdown('lang-dd-app');
   const pt = lang === 'pt';
-  document.getElementById('beta-text').textContent = pt
+  const betaEl = document.getElementById('beta-text');
+  if (betaEl) betaEl.textContent = pt
     ? '⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.'
     : '⚙️ This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.';
-  document.getElementById('upload-label-text').textContent = pt ? 'Carregue seus arquivos ZPL para convertê-los para o formato PDF' : 'Upload your ZPL files to convert them to PDF format';
-  document.getElementById('drop-main-text').textContent = pt ? 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)' : 'Drag and drop your files here (multiple files supported)';
-  document.getElementById('formats-text').textContent = pt ? 'Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL' : 'Accepted formats: .txt, .zpl or .zip with ZPL files';
-  document.getElementById('merge-hint-text').textContent = pt ? '✓ Vários arquivos serão unidos em um único PDF' : '✓ Multiple files will be merged into a single PDF';
-  document.getElementById('preview-empty-text').textContent = pt ? 'Pré-visualização aparecerá aqui' : 'Preview will appear here';
-  document.getElementById('hist-title').textContent = pt ? 'Histórico de Processamento' : 'Processing History';
-  document.getElementById('th-date').textContent = pt ? 'Data' : 'Date';
-  document.getElementById('th-labels').textContent = pt ? 'Quantidade de Etiquetas' : 'Label Count';
-  document.getElementById('th-format').textContent = pt ? 'Formato de Impressão' : 'Print Format';
-  document.getElementById('th-time').textContent = pt ? 'Processando...' : 'Processing...';
-  document.getElementById('th-status').textContent = 'Status';
-  document.getElementById('check-pt').classList.toggle('hidden', lang !== 'pt');
-  document.getElementById('check-en').classList.toggle('hidden', lang !== 'en');
+  const uploadLabel = document.getElementById('upload-label-text');
+  if (uploadLabel) uploadLabel.textContent = pt ? 'Carregue seus arquivos ZPL para convertê-los para o formato PDF' : 'Upload your ZPL files to convert them to PDF format';
+  const dropMain = document.getElementById('drop-main-text');
+  if (dropMain) dropMain.textContent = pt ? 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)' : 'Drag and drop your files here (multiple files supported)';
+  const fmtsTxt = document.getElementById('formats-text');
+  if (fmtsTxt) fmtsTxt.textContent = pt ? 'Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL' : 'Accepted formats: .txt, .zpl or .zip with ZPL files';
+  const mergeHint = document.getElementById('merge-hint-text');
+  if (mergeHint) mergeHint.textContent = pt ? '✓ Vários arquivos serão unidos em um único PDF' : '✓ Multiple files will be merged into a single PDF';
+  const previewEmpty = document.getElementById('preview-empty-text');
+  if (previewEmpty) previewEmpty.textContent = pt ? 'Pré-visualização aparecerá aqui' : 'Preview will appear here';
+  const histTitle = document.getElementById('hist-title');
+  if (histTitle) histTitle.textContent = pt ? 'Histórico de Processamento' : 'Processing History';
+  const thDate = document.getElementById('th-date');
+  if (thDate) thDate.textContent = pt ? 'Data' : 'Date';
+  const thLabels = document.getElementById('th-labels');
+  if (thLabels) thLabels.textContent = pt ? 'Quantidade de Etiquetas' : 'Label Count';
+  const thFmt = document.getElementById('th-format');
+  if (thFmt) thFmt.textContent = pt ? 'Formato de Impressão' : 'Print Format';
+  const thTime = document.getElementById('th-time');
+  if (thTime) thTime.textContent = pt ? 'Processando...' : 'Processing...';
+  // Lang check marks
+  ['check-pt','check-pt-app'].forEach(id => { const el=document.getElementById(id); if(el) el.classList.toggle('hidden', lang !== 'pt'); });
+  ['check-en','check-en-app'].forEach(id => { const el=document.getElementById(id); if(el) el.classList.toggle('hidden', lang !== 'en'); });
   renderHistory();
 }
 
@@ -1113,8 +1347,8 @@ function submitFeedback() {
 
   // Close dropdowns on outside click
   document.addEventListener('click', e => {
-    const triggers = ['lang-btn', 'nav-user-btn'];
-    const dds = ['lang-dd','user-dd','date-filter-dd','type-filter-dd'];
+    const triggers = ['lang-btn', 'lang-btn-app', 'nav-user-btn'];
+    const dds = ['lang-dd','lang-dd-app','user-dd','date-filter-dd','type-filter-dd'];
     const clickedInside = dds.some(id => { const el=document.getElementById(id); return el&&el.contains(e.target); })
       || triggers.some(id => { const el=document.getElementById(id); return el&&el.contains(e.target); })
       || e.target.closest('.filter-btn');
@@ -1122,7 +1356,6 @@ function submitFeedback() {
   });
 
   await initAuth();
-  if (!APP.user) loadLocalHistory();
 })();
 </script>
 </body>
