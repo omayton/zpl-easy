@@ -270,6 +270,52 @@
   </div>
 </main>
 
+<!-- ======================== VIEW MODAL ======================== -->
+<div id="view-modal" class="modal-overlay hidden" style="align-items:flex-start;padding-top:40px;">
+  <div style="background:#fff;border-radius:20px;width:100%;max-width:480px;position:relative;display:flex;flex-direction:column;max-height:88vh;overflow:hidden;">
+    <!-- Header -->
+    <div style="background:#16a34a;padding:16px 20px;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span id="vm-title" style="color:white;font-weight:600;font-size:14px;"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="vm-page-info" style="color:rgba(255,255,255,0.75);font-size:12px;"></span>
+        <button onclick="hideModal('view-modal')" style="color:rgba(255,255,255,0.8);background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <!-- Image area -->
+    <div style="flex:1;overflow:hidden;background:#f8fafc;display:flex;align-items:center;justify-content:center;position:relative;min-height:300px;">
+      <!-- spinner -->
+      <div id="vm-loading" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#9ca3af;">
+        <svg class="spin" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        <span style="font-size:13px;">Carregando...</span>
+      </div>
+      <!-- image -->
+      <img id="vm-img" src="" alt="" style="display:none;max-width:100%;max-height:420px;object-fit:contain;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.12);" />
+      <!-- prev/next overlays -->
+      <button id="vm-prev" onclick="vmNav(-1)" style="display:none;position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.9);border:1px solid #e5e7eb;border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);" id="vm-prev">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button id="vm-next" onclick="vmNav(1)" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.9);border:1px solid #e5e7eb;border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <!-- Thumbnail strip -->
+    <div id="vm-thumbs" style="display:none;flex-shrink:0;padding:10px 14px;background:#fff;border-top:1px solid #f3f4f6;overflow-x:auto;display:flex;gap:6px;scrollbar-width:thin;"></div>
+    <!-- Footer -->
+    <div style="flex-shrink:0;padding:12px 16px;background:#fff;border-top:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;">
+      <span id="vm-label-count" style="font-size:12px;color:#6b7280;"></span>
+      <button id="vm-download-btn" onclick="vmDownload()" style="display:flex;align-items:center;gap:6px;background:#16a34a;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Baixar PDF
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ======================== AUTH MODAL ======================== -->
 <div id="auth-modal" class="modal-overlay hidden">
   <div class="modal-box">
@@ -734,8 +780,15 @@ function renderHistory() {
     const hasCloudPdf = item.cloudPdf && item.id && item.status === 'ok';
     const canDownload = hasLocalPdf || hasCloudPdf;
 
+    const canView = (item.previewBlobs && item.previewBlobs.length) || hasLocalPdf || hasCloudPdf;
+
+    const viewBtn = canView
+      ? `<button onclick="viewItem(${realIdx})" title="${APP.lang==='pt'?'Visualizar etiquetas':'View labels'}" class="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>` : '';
+
     const downloadBtn = canDownload
-      ? `<button onclick="downloadItem(${realIdx})" title="${APP.lang==='pt'?'Baixar PDF':'Download PDF'}" class="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors">
+      ? `<button onclick="downloadItem(${realIdx})" title="${APP.lang==='pt'?'Baixar PDF':'Download PDF'}" class="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>` : '';
 
@@ -756,7 +809,7 @@ function renderHistory() {
       <td class="px-4 py-3">${fmtBadge}</td>
       <td class="px-4 py-3 hidden sm:table-cell">${timeStr}</td>
       <td class="px-4 py-3">${statusBadge}</td>
-      <td class="px-4 py-3"><div class="flex items-center gap-1">${downloadBtn}${deleteBtn}</div></td>
+      <td class="px-4 py-3"><div class="flex items-center gap-1">${viewBtn}${downloadBtn}${deleteBtn}</div></td>
     `;
     body.appendChild(tr);
   });
@@ -787,6 +840,169 @@ function renderHistory() {
     paginationEl.classList.add('hidden');
   }
 }
+
+// ====== VIEW MODAL ======
+const VM = { idx: null, imgs: [], cur: 0 };
+
+async function viewItem(idx) {
+  const item = APP.history[idx];
+  if (!item) return;
+  VM.idx = idx;
+  VM.imgs = [];
+  VM.cur = 0;
+
+  // Set title
+  document.getElementById('vm-title').textContent = item.filename || 'Etiquetas';
+  const countEl = document.getElementById('vm-label-count');
+  countEl.textContent = item.labelCount ? `${item.labelCount} etiqueta${item.labelCount !== 1 ? 's' : ''}` : '';
+
+  // Show download button only if possible
+  const canDl = (item.pdf && item.status === 'ok') || (item.cloudPdf && item.id && item.status === 'ok');
+  document.getElementById('vm-download-btn').style.display = canDl ? 'flex' : 'none';
+
+  showModal('view-modal');
+  vmShowLoading(true);
+
+  // Source 1: previewBlobs in memory (fastest)
+  if (item.previewBlobs && item.previewBlobs.length) {
+    VM.imgs = item.previewBlobs.map(b => URL.createObjectURL(b));
+    vmRender();
+    return;
+  }
+
+  // Source 2: local PDF blob → render pages as images via canvas
+  if (item.pdf) {
+    await vmLoadPdfBlob(item.pdf);
+    return;
+  }
+
+  // Source 3: cloud PDF → download then render
+  if (item.cloudPdf && item.id && APP.user) {
+    const path = `${APP.user.id}/${item.id}.pdf`;
+    const { data, error } = await sb.storage.from('pdfs').download(path);
+    if (!error && data) {
+      await vmLoadPdfBlob(data);
+      return;
+    }
+  }
+
+  // Fallback: nothing to show
+  vmShowLoading(false);
+  document.getElementById('vm-img').style.display = 'block';
+  document.getElementById('vm-img').src = '';
+  document.getElementById('vm-img').alt = 'Prévia não disponível';
+}
+
+async function vmLoadPdfBlob(blob) {
+  try {
+    // Use PDF.js if available, otherwise just show first page via <embed>
+    if (window.pdfjsLib) {
+      const arrayBuffer = await blob.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const canvases = [];
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        canvases.push(canvas.toDataURL('image/png'));
+      }
+      VM.imgs = canvases;
+      vmRender();
+    } else {
+      // Fallback: show PDF in an iframe
+      const url = URL.createObjectURL(blob);
+      VM.imgs = []; // signal iframe mode
+      vmShowLoading(false);
+      const img = document.getElementById('vm-img');
+      img.style.display = 'none';
+      const area = img.parentElement;
+      // Remove old iframe if any
+      const old = document.getElementById('vm-iframe');
+      if (old) old.remove();
+      const iframe = document.createElement('iframe');
+      iframe.id = 'vm-iframe';
+      iframe.src = url;
+      iframe.style.cssText = 'width:100%;height:420px;border:none;border-radius:8px;';
+      area.appendChild(iframe);
+      document.getElementById('vm-prev').style.display = 'none';
+      document.getElementById('vm-next').style.display = 'none';
+      document.getElementById('vm-thumbs').style.display = 'none';
+      document.getElementById('vm-page-info').textContent = '';
+    }
+  } catch(e) {
+    vmShowLoading(false);
+    console.warn('vmLoadPdfBlob error', e);
+  }
+}
+
+function vmRender() {
+  if (!VM.imgs.length) return;
+  vmShowLoading(false);
+
+  const img = document.getElementById('vm-img');
+  const prev = document.getElementById('vm-prev');
+  const next = document.getElementById('vm-next');
+  const thumbs = document.getElementById('vm-thumbs');
+  const pageInfo = document.getElementById('vm-page-info');
+
+  // Remove iframe if present
+  const old = document.getElementById('vm-iframe');
+  if (old) old.remove();
+
+  img.style.display = 'block';
+  img.src = VM.imgs[VM.cur];
+
+  const total = VM.imgs.length;
+  pageInfo.textContent = total > 1 ? `${VM.cur + 1} / ${total}` : '';
+  prev.style.display = total > 1 ? 'flex' : 'none';
+  next.style.display = total > 1 ? 'flex' : 'none';
+
+  // Thumbnails for > 1 page
+  if (total > 1) {
+    thumbs.style.display = 'flex';
+    thumbs.innerHTML = '';
+    VM.imgs.forEach((src, i) => {
+      const t = document.createElement('img');
+      t.src = src;
+      t.alt = `Página ${i+1}`;
+      t.onclick = () => { VM.cur = i; vmRender(); };
+      t.style.cssText = `height:52px;width:auto;border-radius:6px;cursor:pointer;border:2px solid ${i === VM.cur ? '#16a34a' : 'transparent'};flex-shrink:0;object-fit:contain;background:#f3f4f6;`;
+      thumbs.appendChild(t);
+    });
+    // Scroll active thumb into view
+    thumbs.children[VM.cur]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  } else {
+    thumbs.style.display = 'none';
+  }
+}
+
+function vmNav(dir) {
+  if (!VM.imgs.length) return;
+  VM.cur = Math.max(0, Math.min(VM.cur + dir, VM.imgs.length - 1));
+  vmRender();
+}
+
+function vmShowLoading(show) {
+  document.getElementById('vm-loading').style.display = show ? 'flex' : 'none';
+  document.getElementById('vm-img').style.display = show ? 'none' : 'block';
+}
+
+function vmDownload() {
+  downloadItem(VM.idx);
+}
+
+// Keyboard navigation inside view modal
+document.addEventListener('keydown', e => {
+  const modal = document.getElementById('view-modal');
+  if (modal && !modal.classList.contains('hidden')) {
+    if (e.key === 'ArrowLeft') vmNav(-1);
+    if (e.key === 'ArrowRight') vmNav(1);
+    if (e.key === 'Escape') hideModal('view-modal');
+  }
+});
 
 function downloadItem(idx) {
   const item = APP.history[idx];
