@@ -354,6 +354,26 @@ const APP = {
 
 // ====== AUTH ======
 async function initAuth() {
+  // Handle email confirmation / magic link token in URL hash
+  // Supabase embeds #access_token=... when redirecting from confirmation email
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    const { data, error } = await sb.auth.getSession();
+    // Clean the hash from the URL without reloading
+    history.replaceState(null, '', window.location.pathname);
+    if (!error && data.session) {
+      APP.user = data.session.user;
+      updateNavAuth();
+      await loadHistory();
+      showToast(APP.lang === 'pt' ? 'E-mail confirmado! Bem-vindo ✓' : 'Email confirmed! Welcome ✓', 4000);
+      sb.auth.onAuthStateChange(async (event, session) => {
+        APP.user = session ? session.user : null;
+        updateNavAuth();
+        if (APP.user) { await loadHistory(); } else { APP.history = []; renderHistory(); }
+      });
+      return;
+    }
+  }
+
   const { data: { session } } = await sb.auth.getSession();
   if (session) { APP.user = session.user; updateNavAuth(); await loadHistory(); }
   sb.auth.onAuthStateChange(async (event, session) => {
