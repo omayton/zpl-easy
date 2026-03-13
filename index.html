@@ -36,6 +36,19 @@
     .filter-dd button:hover { background:#f3f4f6; }
     .filter-dd button.active { color:#5B0C8C;font-weight:600; }
 
+    /* ===== DELETE EXPLOSION ANIMATION ===== */
+    @keyframes row-shake {
+      0%,100% { transform:translateX(0); }
+      20%      { transform:translateX(-7px); }
+      40%      { transform:translateX(7px); }
+      60%      { transform:translateX(-5px); }
+      80%      { transform:translateX(5px); }
+    }
+    @keyframes particle-fly {
+      0%   { transform:translate(0,0) scale(1); opacity:1; }
+      100% { transform:translate(var(--dx),var(--dy)) scale(0); opacity:0; }
+    }
+
     /* ===== LANDING PAGE STYLES ===== */
     .hero-gradient {
       background: linear-gradient(135deg, #1e0335 0%, #3d0870 40%, #5B0C8C 70%, #4a0a73 100%);
@@ -1054,7 +1067,7 @@ function renderHistory() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>` : '';
 
-    const deleteBtn = `<button onclick="deleteItem(${realIdx})" title="${APP.lang==='pt'?'Remover':'Remove'}" class="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors">
+    const deleteBtn = `<button onclick="deleteItem(${realIdx}, this)" title="${APP.lang==='pt'?'Remover':'Remove'}" class="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
     </button>`;
 
@@ -1184,9 +1197,59 @@ function downloadItem(idx) {
   }
 }
 
-async function deleteItem(idx) {
+// ====== EXPLOSION HELPERS ======
+function spawnParticles(row) {
+  const rect = row.getBoundingClientRect();
+  const colors = ['#5B0C8C','#9AC000','#c084fc','#7a9e00','#f59e0b','#dc2626','#e9d5ff'];
+  for (let i = 0; i < 16; i++) {
+    const p = document.createElement('div');
+    const angle = (Math.PI * 2 * i / 16) + (Math.random() - 0.5) * 0.9;
+    const dist  = 28 + Math.random() * 80;
+    const size  = 4 + Math.random() * 6;
+    const dur   = 0.45 + Math.random() * 0.2;
+    p.style.cssText = `
+      position:fixed;width:${size}px;height:${size}px;border-radius:50%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:${rect.left + Math.random()*rect.width}px;
+      top:${rect.top + rect.height/2}px;
+      pointer-events:none;z-index:9999;
+      animation:particle-fly ${dur}s cubic-bezier(.25,.46,.45,.94) forwards;
+      --dx:${Math.cos(angle)*dist}px;--dy:${Math.sin(angle)*dist}px;`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), dur * 1000 + 100);
+  }
+}
+
+function animateRowDestroy(row) {
+  return new Promise(resolve => {
+    // 1 – flash red + shake
+    row.style.transition = 'background 0.1s';
+    row.style.background = '#fee2e2';
+    row.style.animation   = 'row-shake 0.28s ease';
+
+    setTimeout(() => {
+      // 2 – burst particles at peak of shake
+      spawnParticles(row);
+
+      // 3 – fly out to the right + fade
+      row.style.animation  = 'none';
+      row.style.transition = 'opacity 0.28s ease, transform 0.28s ease';
+      row.style.opacity    = '0';
+      row.style.transform  = 'translateX(80px) scale(0.94)';
+
+      setTimeout(resolve, 300);
+    }, 280);
+  });
+}
+
+async function deleteItem(idx, btn) {
   const item = APP.history[idx];
   if (!item) return;
+
+  // Animate then delete
+  const row = btn && btn.closest('tr');
+  if (row) await animateRowDestroy(row);
+
   if (APP.user && item.id) await deleteCloudConversion(item.id);
   APP.history.splice(idx, 1);
   renderHistory();
