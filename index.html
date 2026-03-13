@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .drop-active { background-color: #f0fdf4 !important; border-color: #16a34a !important; }
@@ -423,9 +424,20 @@ async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) { APP.user = session.user; updateNavAuth(); await loadHistory(); }
   sb.auth.onAuthStateChange(async (event, session) => {
-    APP.user = session ? session.user : null;
-    updateNavAuth();
-    if (APP.user) { await loadHistory(); } else { APP.history = []; renderHistory(); }
+    // Only act on real sign-in/sign-out — ignore TOKEN_REFRESHED and MFA_CHALLENGE
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      APP.user = session ? session.user : null;
+      updateNavAuth();
+      if (APP.user && !APP.history.length) await loadHistory();
+    } else if (event === 'SIGNED_OUT') {
+      APP.user = null;
+      updateNavAuth();
+      APP.history = [];
+      renderHistory();
+    } else if (event === 'TOKEN_REFRESHED' && session) {
+      // Just update the user reference silently, don't reload history
+      APP.user = session.user;
+    }
   });
 }
 
@@ -888,49 +900,57 @@ async function viewItem(idx) {
 
   // Fallback: nothing to show
   vmShowLoading(false);
-  document.getElementById('vm-img').style.display = 'block';
-  document.getElementById('vm-img').src = '';
-  document.getElementById('vm-img').alt = 'Prévia não disponível';
+  const noImg = document.getElementById('vm-img');
+  noImg.style.display = 'flex';
+  noImg.style.alignItems = 'center';
+  noImg.style.justifyContent = 'center';
+  noImg.style.color = '#9ca3af';
+  noImg.style.fontSize = '13px';
+  noImg.style.width = '100%';
+  noImg.style.minHeight = '200px';
+  noImg.removeAttribute('src');
+  document.getElementById('vm-loading').innerHTML =
+    `<p style="color:#9ca3af;font-size:13px;">Prévia não disponível para este item.</p>`;
+  document.getElementById('vm-loading').style.display = 'flex';
 }
 
 async function vmLoadPdfBlob(blob) {
   try {
-    // Use PDF.js if available, otherwise just show first page via <embed>
+    // Configure PDF.js worker
     if (window.pdfjsLib) {
+      if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      }
       const arrayBuffer = await blob.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const canvases = [];
+      const pages = [];
       for (let p = 1; p <= pdf.numPages; p++) {
         const page = await pdf.getPage(p);
-        const viewport = page.getViewport({ scale: 2 });
+        // Scale for label size 4x6 inch @ 150dpi = 600x900px, capped
+        const viewport = page.getViewport({ scale: 1.8 });
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-        canvases.push(canvas.toDataURL('image/png'));
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        pages.push(canvas.toDataURL('image/png'));
       }
-      VM.imgs = canvases;
+      VM.imgs = pages;
       vmRender();
     } else {
-      // Fallback: show PDF in an iframe
-      const url = URL.createObjectURL(blob);
-      VM.imgs = []; // signal iframe mode
+      // PDF.js not yet loaded — fallback: open PDF in new tab for printing
       vmShowLoading(false);
-      const img = document.getElementById('vm-img');
-      img.style.display = 'none';
-      const area = img.parentElement;
-      // Remove old iframe if any
-      const old = document.getElementById('vm-iframe');
-      if (old) old.remove();
-      const iframe = document.createElement('iframe');
-      iframe.id = 'vm-iframe';
-      iframe.src = url;
-      iframe.style.cssText = 'width:100%;height:420px;border:none;border-radius:8px;';
-      area.appendChild(iframe);
-      document.getElementById('vm-prev').style.display = 'none';
-      document.getElementById('vm-next').style.display = 'none';
-      document.getElementById('vm-thumbs').style.display = 'none';
-      document.getElementById('vm-page-info').textContent = '';
+      const url = URL.createObjectURL(blob);
+      document.getElementById('vm-img').style.display = 'none';
+      document.getElementById('vm-loading').innerHTML =
+        `<div style="text-align:center;padding:20px;">
+          <p style="color:#374151;font-size:13px;margin-bottom:12px;">Abrindo visualizador...</p>
+          <button onclick="window.open('${url}','_blank')" style="background:#16a34a;color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;">
+            Abrir PDF para imprimir
+          </button>
+        </div>`;
+      document.getElementById('vm-loading').style.display = 'flex';
     }
   } catch(e) {
     vmShowLoading(false);
