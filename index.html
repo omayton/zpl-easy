@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .drop-active { background-color: #f5f0ff !important; border-color: #5B0C8C !important; }
@@ -129,7 +130,7 @@
 
     <!-- App nav buttons (visible when logged in) -->
     <div id="nav-app-btns" class="hidden items-center gap-2">
-      <button onclick="showModal('pix-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-full hover:bg-red-50 transition-colors">
+      <button onclick="showModal('pix-modal');initPixQr()" class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-full hover:bg-red-50 transition-colors">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
         Apoiar <span style="background:#9AC000;" class="text-white text-xs px-1.5 py-0.5 rounded font-semibold">PIX</span>
       </button>
@@ -597,8 +598,23 @@
     <button onclick="hideModal('pix-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3"><svg width="22" height="22" viewBox="0 0 24 24" fill="#dc2626"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
     <h3 class="text-lg font-bold text-gray-900 mb-1">Apoiar o ZPL Easy</h3>
-    <p class="text-sm text-gray-500 mb-4">Esta ferramenta é gratuita e mantida com muito carinho. Se ela te ajudou, considere uma contribuição via PIX:</p>
-    <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-4"><p class="text-xs text-gray-400 mb-1">Chave PIX (e-mail)</p><p class="font-mono text-sm font-semibold text-gray-800 select-all">exemplo@email.com</p></div>
+    <p class="text-sm text-gray-500 mb-4">Esta ferramenta é gratuita e mantida com muito carinho. Se ela te ajudou, considere uma contribuição via PIX 💜</p>
+    <!-- QR Code -->
+    <div class="flex justify-center mb-3">
+      <div id="pix-qrcode" class="rounded-xl overflow-hidden border-2 p-2" style="border-color:#5B0C8C;background:#fff;display:inline-block;"></div>
+    </div>
+    <p class="text-xs text-gray-400 mb-1">ou copie a chave PIX abaixo</p>
+    <!-- Chave PIX -->
+    <div class="rounded-xl p-3 border mb-4 flex items-center justify-between gap-2" style="background:#f5f0ff;border-color:#d8b4fe;">
+      <div class="text-left">
+        <p class="text-xs font-medium mb-0.5" style="color:#5B0C8C;">Chave PIX (e-mail)</p>
+        <p id="pix-key-text" class="font-mono text-sm font-semibold text-gray-800 select-all">omaytonr@gmail.com</p>
+      </div>
+      <button onclick="copyPixKey()" id="pix-copy-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-colors flex-shrink-0" style="background:#5B0C8C;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar
+      </button>
+    </div>
     <button onclick="hideModal('pix-modal')" class="btn-primary">Fechar</button>
   </div>
 </div>
@@ -1318,6 +1334,65 @@ function setLang(lang) {
   ['check-pt','check-pt-app'].forEach(id => { const el=document.getElementById(id); if(el) el.classList.toggle('hidden', lang !== 'pt'); });
   ['check-en','check-en-app'].forEach(id => { const el=document.getElementById(id); if(el) el.classList.toggle('hidden', lang !== 'en'); });
   renderHistory();
+}
+
+// ====== PIX ======
+const PIX_KEY  = 'omaytonr@gmail.com';
+const PIX_NAME = 'ZPL Easy';
+const PIX_CITY = 'Brasil';
+let _pixQrGenerated = false;
+
+function buildPixPayload(key, name, city) {
+  function tlv(id, value) {
+    return id + String(value.length).padStart(2,'0') + value;
+  }
+  const gui = tlv('00','br.gov.bcb.pix');
+  const pixKey = tlv('01', key);
+  const merchant = tlv('26', gui + pixKey);
+  const txId = tlv('05','***');
+  const additional = tlv('62', txId);
+  const raw = '000201' + merchant + tlv('52','0000') + tlv('53','986')
+            + tlv('58','BR') + tlv('59', name.substring(0,25))
+            + tlv('60', city.substring(0,15)) + additional + '6304';
+  // CRC16-CCITT
+  let crc = 0xFFFF;
+  for (let i = 0; i < raw.length; i++) {
+    crc ^= raw.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+      crc &= 0xFFFF;
+    }
+  }
+  return raw + crc.toString(16).toUpperCase().padStart(4,'0');
+}
+
+function initPixQr() {
+  if (_pixQrGenerated) return;
+  _pixQrGenerated = true;
+  const container = document.getElementById('pix-qrcode');
+  if (!container || typeof QRCode === 'undefined') return;
+  container.innerHTML = '';
+  const payload = buildPixPayload(PIX_KEY, PIX_NAME, PIX_CITY);
+  new QRCode(container, {
+    text: payload,
+    width: 180,
+    height: 180,
+    colorDark: '#5B0C8C',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+function copyPixKey() {
+  navigator.clipboard.writeText(PIX_KEY).then(() => {
+    const btn = document.getElementById('pix-copy-btn');
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copiado!';
+    btn.style.background = '#9AC000';
+    setTimeout(() => {
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar';
+      btn.style.background = '#5B0C8C';
+    }, 2000);
+  }).catch(() => showToast('Chave PIX: ' + PIX_KEY, 4000));
 }
 
 // ====== FEEDBACK ======
