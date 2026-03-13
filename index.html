@@ -100,6 +100,40 @@
       transition:background 0.12s;display:flex;align-items:center;gap:6px;
     }
     .nav-btn-outline:hover { background:#f5f0ff; }
+
+    /* ===== SKELETON LOADING ===== */
+    @keyframes skeleton-pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+    .skeleton { background:#e9eaec;border-radius:6px;animation:skeleton-pulse 1.4s ease infinite;display:inline-block; }
+
+    /* ===== BULK ACTION BAR ===== */
+    .bulk-bar {
+      position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:600;
+      background:#1a103a;color:#fff;border-radius:16px;padding:12px 20px;
+      display:flex;align-items:center;gap:12px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.3);min-width:280px;justify-content:center;
+      animation:bulk-bar-in 0.25s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes bulk-bar-in { from{transform:translateX(-50%) translateY(30px);opacity:0;} to{transform:translateX(-50%) translateY(0);opacity:1;} }
+
+    /* ===== INLINE RENAME ===== */
+    .rename-input {
+      background:#fff;border:1px solid #5B0C8C;border-radius:6px;
+      padding:2px 8px;font-size:12px;color:#1f2937;outline:none;
+      max-width:180px;width:100%;box-shadow:0 0 0 2px rgba(91,12,140,0.12);
+    }
+
+    /* ===== SIZE SELECTOR ===== */
+    .sz-btn { padding:4px 10px;font-size:11px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#6b7280;font-weight:500;cursor:pointer;transition:all 0.12s;white-space:nowrap; }
+    .sz-btn:hover { border-color:#5B0C8C;color:#5B0C8C; }
+    .sz-btn.active { border-color:#5B0C8C;background:#f3e8ff;color:#5B0C8C; }
+
+    /* ===== DATE RANGE INPUTS ===== */
+    .date-range-input { border:1px solid #e5e7eb;border-radius:7px;padding:5px 8px;font-size:11px;outline:none;color:#374151;background:#fff;transition:border-color 0.15s; }
+    .date-range-input:focus { border-color:#5B0C8C;box-shadow:0 0 0 2px rgba(91,12,140,0.08); }
+
+    /* ===== ONBOARDING EMPTY STATE ===== */
+    .onboarding-step { display:flex;align-items:center;gap:12px;background:#fff;border-radius:10px;padding:10px 14px; }
+    .onboarding-num { width:26px;height:26px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -408,6 +442,21 @@
             Nitidez+ (300dpi)
           </button>
         </div>
+        <!-- Size selector -->
+        <div class="mt-3 flex flex-wrap gap-1.5 items-center justify-center" onclick="event.stopPropagation()">
+          <span class="text-xs text-gray-400 font-medium">Tamanho:</span>
+          <button id="sz-4x6"    onclick="setSize('4x6')"    class="sz-btn active">4×6 pol</button>
+          <button id="sz-4x4"    onclick="setSize('4x4')"    class="sz-btn">4×4 pol</button>
+          <button id="sz-2x1"    onclick="setSize('2x1')"    class="sz-btn">2×1 pol</button>
+          <button id="sz-custom" onclick="setSize('custom')" class="sz-btn">Personalizado</button>
+        </div>
+        <div id="custom-size-inputs" class="hidden mt-2 flex gap-1.5 items-center justify-center" onclick="event.stopPropagation()">
+          <input id="custom-w" type="number" step="0.1" min="0.5" max="12" value="4" class="w-16 text-xs border border-gray-200 rounded-lg px-2 py-1 outline-none text-center" placeholder="L" onfocus="this.style.borderColor='#5B0C8C'" onblur="this.style.borderColor='#e5e7eb'" />
+          <span class="text-xs text-gray-400">×</span>
+          <input id="custom-h" type="number" step="0.1" min="0.5" max="16" value="6" class="w-16 text-xs border border-gray-200 rounded-lg px-2 py-1 outline-none text-center" placeholder="A" onfocus="this.style.borderColor='#5B0C8C'" onblur="this.style.borderColor='#e5e7eb'" />
+          <span class="text-xs text-gray-400">pol</span>
+          <button onclick="applyCustomSize()" class="px-3 py-1 text-xs rounded-lg font-semibold text-white" style="background:#5B0C8C;">OK</button>
+        </div>
         <input type="file" id="file-input" multiple accept=".txt,.zpl,.zip" class="hidden" onchange="handleFileInput(event)" />
       </div>
 
@@ -508,6 +557,16 @@
             <button onclick="setTypeFilter('err')">✗ Erro</button>
           </div>
         </div>
+        <!-- Date range -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-xs text-gray-400 font-medium whitespace-nowrap">De:</span>
+          <input id="date-from" type="date" onchange="setDateRange()" class="date-range-input" />
+          <span class="text-xs text-gray-400">até:</span>
+          <input id="date-to" type="date" onchange="setDateRange()" class="date-range-input" />
+          <button id="clear-date-range" onclick="clearDateRange()" class="hidden text-xs text-gray-400 hover:text-red-400 transition-colors ml-0.5" title="Limpar datas">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
         <!-- Clear -->
         <button onclick="clearHistory()" class="filter-btn text-red-400 border-red-100 hover:bg-red-50 ml-auto">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -520,6 +579,7 @@
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-gray-100 bg-gray-50">
+              <th class="pl-4 py-3 w-8"><input type="checkbox" id="select-all-cb" onchange="toggleSelectAll(this.checked)" class="rounded cursor-pointer" style="accent-color:#5B0C8C;" /></th>
               <th id="th-date"   class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</th>
               <th id="th-labels" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantidade de Etiquetas</th>
               <th id="th-format" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Formato de Impressão</th>
@@ -531,10 +591,34 @@
           <tbody id="history-body"></tbody>
         </table>
 
-        <!-- Empty state -->
+        <!-- Empty state: onboarding (first use) -->
+        <div id="hist-onboarding" class="hidden py-10 px-6 text-center">
+          <div style="background:linear-gradient(135deg,#f8f5ff,#f0e8fb);border-radius:16px;padding:28px 24px;max-width:500px;margin:0 auto;">
+            <div style="width:52px;height:52px;background:#5B0C8C;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            </div>
+            <h3 style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:6px;">Bem-vindo ao TIKETEI! 🎉</h3>
+            <p style="font-size:13px;color:#6b7280;margin-bottom:18px;line-height:1.6;">Você ainda não fez nenhuma conversão. Comece agora fazendo upload de um arquivo ZPL acima.</p>
+            <div style="display:flex;flex-direction:column;gap:8px;text-align:left;">
+              <div class="onboarding-step">
+                <div class="onboarding-num" style="background:#5B0C8C;">1</div>
+                <span style="font-size:12px;color:#374151;">Arraste seu arquivo <strong>.zpl</strong>, <strong>.txt</strong> ou <strong>.zip</strong> para a área de upload</span>
+              </div>
+              <div class="onboarding-step">
+                <div class="onboarding-num" style="background:#5B0C8C;">2</div>
+                <span style="font-size:12px;color:#374151;">Escolha o formato (Padrão 203dpi ou Nitidez+ 300dpi) e o tamanho da etiqueta</span>
+              </div>
+              <div class="onboarding-step">
+                <div class="onboarding-num" style="background:#9AC000;">3</div>
+                <span style="font-size:12px;color:#374151;">Baixe seu PDF pronto para impressão — o histórico fica salvo aqui na nuvem!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Empty state: no results from filter/search -->
         <div id="hist-empty-state" class="hidden py-10 text-center text-gray-400">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-2 opacity-40"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <p class="text-sm">Nenhuma conversão encontrada</p>
+          <p class="text-sm">Nenhuma conversão encontrada para este filtro</p>
         </div>
 
         <!-- Pagination -->
@@ -601,7 +685,21 @@
       <div class="mb-4"><label class="block text-xs font-medium text-gray-600 mb-1">Senha</label><input id="login-password" type="password" placeholder="••••••••" class="input-field" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
       <p id="login-error" class="text-red-500 text-xs mb-3 hidden"></p>
       <button onclick="doLogin()" id="btn-login" class="btn-primary">Entrar</button>
-      <p class="text-center text-xs text-gray-400 mt-3">Não tem conta? <button onclick="switchAuthTab('register')" class="font-medium hover:underline" style="color:#5B0C8C;">Criar agora</button></p>
+      <div class="flex items-center justify-between mt-3">
+        <p class="text-xs text-gray-400">Não tem conta? <button onclick="switchAuthTab('register')" class="font-medium hover:underline" style="color:#5B0C8C;">Criar agora</button></p>
+        <button onclick="switchAuthTab('forgot')" class="text-xs font-medium hover:underline" style="color:#5B0C8C;">Esqueci a senha</button>
+      </div>
+    </div>
+    <div id="form-forgot" class="hidden">
+      <button onclick="switchAuthTab('login')" class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 mb-4 transition-colors">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Voltar para o login
+      </button>
+      <h3 class="text-base font-bold text-gray-900 mb-1">Redefinir senha</h3>
+      <p class="text-xs text-gray-500 mb-4">Informe seu e-mail e enviaremos um link para redefinir sua senha.</p>
+      <div class="mb-4"><label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label><input id="forgot-email" type="email" placeholder="seu@email.com" class="input-field" onkeydown="if(event.key==='Enter')doForgotPassword()" /></div>
+      <p id="forgot-msg" class="text-xs mb-3 hidden"></p>
+      <button onclick="doForgotPassword()" id="btn-forgot" class="btn-primary">Enviar link de redefinição</button>
     </div>
     <div id="form-register" class="hidden">
       <div class="mb-3"><label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label><input id="reg-email" type="email" placeholder="seu@email.com" class="input-field" /></div>
@@ -653,6 +751,17 @@
   </div>
 </div>
 
+<!-- BULK ACTION BAR -->
+<div id="bulk-bar" class="bulk-bar hidden">
+  <span id="bulk-count" class="text-sm font-semibold" style="color:#d8b4fe;"></span>
+  <div style="width:1px;height:20px;background:rgba(255,255,255,0.18);flex-shrink:0;"></div>
+  <button onclick="bulkDownloadZip()" id="bulk-dl-btn" class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all" style="background:#9AC000;color:#fff;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Baixar ZIP
+  </button>
+  <button onclick="clearBulkSelection()" class="text-xs hover:text-white transition-colors" style="color:#a78bfa;">✕ Cancelar</button>
+</div>
+
 <!-- TOAST -->
 <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
   <div id="toast-inner" class="hidden bg-gray-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-lg max-w-xs text-center"></div>
@@ -671,11 +780,16 @@ const APP = {
   previewImgs: [],
   previewIdx: 0,
   selectedFormat: 'Padrão',
+  selectedSize: {w:4, h:6},
   user: null,
   dateFilter: 'all',
   typeFilter: 'all',
+  dateFrom: '',
+  dateTo: '',
   histPage: 1,
   PAGE_SIZE: 10,
+  bulkSelected: new Set(),
+  renamingIdx: -1,
 };
 
 // ====== NAV / PAGE TOGGLE ======
@@ -765,7 +879,12 @@ function switchAuthTab(tab) {
     document.getElementById('tab-'+t).className = 'flex-1 pb-2.5 text-sm ' + (t===tab ? 'auth-tab-active' : 'auth-tab');
     document.getElementById('form-'+t).classList.toggle('hidden', t!==tab);
   });
-  ['login-error','reg-error','reg-success'].forEach(id => { const el=document.getElementById(id); if(el){el.textContent='';el.classList.add('hidden');} });
+  const forgotForm = document.getElementById('form-forgot');
+  if (forgotForm) forgotForm.classList.toggle('hidden', tab !== 'forgot');
+  // Hide tab row when showing forgot
+  const tabRow = document.querySelector('#auth-modal .flex.gap-0.border-b');
+  if (tabRow) tabRow.style.display = tab === 'forgot' ? 'none' : '';
+  ['login-error','reg-error','reg-success','forgot-msg'].forEach(id => { const el=document.getElementById(id); if(el){el.textContent='';el.classList.add('hidden');} });
 }
 
 async function doLogin() {
@@ -798,12 +917,14 @@ async function doRegister() {
 // ====== SUPABASE HISTORY ======
 async function loadHistory() {
   if(!APP.user) return;
+  // Show skeleton while fetching
+  showHistorySkeleton();
   const {data,error}=await sb.from('conversions').select('*').eq('user_id',APP.user.id).order('created_at',{ascending:false}).limit(200);
   if(error){console.warn('loadHistory error',error);return;}
   APP.history=(data||[]).map(row=>({
     id:row.id, filename:row.filename, labelCount:row.label_count, format:row.format,
     time:row.processing_time, status:row.status, error:row.error_msg,
-    cloudPdf:true, createdAt:row.created_at,
+    cloudPdf:true, createdAt:row.created_at, size:row.size||null,
   }));
   renderHistory();
 }
@@ -892,7 +1013,7 @@ async function processFiles(files) {
 
   const fmt = APP.selectedFormat || 'Padrão';
   const dpmm = fmt === 'Nitidez+' ? 12 : 8;
-  const w = 4, h = 6;
+  const { w, h } = APP.selectedSize || {w:4, h:6};
 
   showProgressBar(true);
   let allFiles = [];
@@ -939,7 +1060,7 @@ async function processFiles(files) {
     const pdfBlob = doc.output('blob');
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
-    const doneItem = { _key: batchKey, filename: batchName, fileCount, labelCount: totalLabels, format: fmt, time: parseFloat(elapsed), status: 'ok', pdf: pdfBlob, previewBlobs, createdAt: new Date().toISOString() };
+    const doneItem = { _key: batchKey, filename: batchName, fileCount, labelCount: totalLabels, format: fmt, size:{w,h}, time: parseFloat(elapsed), status: 'ok', pdf: pdfBlob, previewBlobs, createdAt: new Date().toISOString() };
     replaceHistoryItem(batchKey, doneItem);
 
     APP.previewImgs = previewBlobs.map(b => URL.createObjectURL(b));
@@ -991,6 +1112,15 @@ function getFilteredHistory() {
         if (d < monthAgo) return false;
       }
     }
+    // Date range filter
+    if (APP.dateFrom && item.createdAt) {
+      const fromDate = new Date(APP.dateFrom + 'T00:00:00');
+      if (new Date(item.createdAt) < fromDate) return false;
+    }
+    if (APP.dateTo && item.createdAt) {
+      const toDate = new Date(APP.dateTo + 'T23:59:59');
+      if (new Date(item.createdAt) > toDate) return false;
+    }
     return true;
   });
 }
@@ -1001,7 +1131,24 @@ function renderHistory() {
   const emptyState = document.getElementById('hist-empty-state');
   const paginationEl = document.getElementById('hist-pagination');
 
-  if (!APP.history.length) { section.classList.add('hidden'); return; }
+  const onboardEl = document.getElementById('hist-onboarding');
+  if (!APP.history.length) {
+    if (APP.user) {
+      // Show onboarding for first-time users
+      section.classList.remove('hidden');
+      body.innerHTML = '';
+      if (onboardEl) onboardEl.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      paginationEl.classList.add('hidden');
+      document.getElementById('hist-total-badge').textContent = '';
+      document.getElementById('hist-summary-labels').textContent = '0 etiquetas';
+      document.getElementById('hist-summary-convs').textContent = '0 conversões';
+    } else {
+      section.classList.add('hidden');
+    }
+    return;
+  }
+  if (onboardEl) onboardEl.classList.add('hidden');
   section.classList.remove('hidden');
 
   const totalLabels = APP.history.filter(h => h.status === 'ok').reduce((s,h) => s + (h.labelCount||0), 0);
@@ -1019,10 +1166,19 @@ function renderHistory() {
   body.innerHTML = '';
   emptyState.classList.toggle('hidden', pageItems.length > 0);
 
+  // Update select-all checkbox state
+  const selectAllCb = document.getElementById('select-all-cb');
+  if (selectAllCb) {
+    const pageIndices = pageItems.map(item => APP.history.indexOf(item));
+    const selectedInPage = pageIndices.filter(i => APP.bulkSelected.has(i)).length;
+    selectAllCb.checked = selectedInPage === pageItems.length && pageItems.length > 0;
+    selectAllCb.indeterminate = selectedInPage > 0 && selectedInPage < pageItems.length;
+  }
+
   pageItems.forEach((item) => {
     const realIdx = APP.history.indexOf(item);
     const tr = document.createElement('tr');
-    tr.className = 'hist-row';
+    tr.className = 'hist-row' + (APP.bulkSelected.has(realIdx) ? ' bg-purple-50' : '');
 
     const date = item.createdAt ? new Date(item.createdAt) : null;
     const dateStr = date
@@ -1071,11 +1227,29 @@ function renderHistory() {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
     </button>`;
 
-    const fileLabel = item.fileCount > 1
-      ? `<span class="text-gray-800 font-medium text-xs">${item.filename}</span><br><span class="text-gray-400 text-xs">${item.fileCount} arquivos</span>`
-      : `<span class="text-gray-800 font-medium text-xs truncate block max-w-[140px]" title="${item.filename}">${item.filename}</span>`;
+    // Inline rename or normal display
+    let fileLabel;
+    if (APP.renamingIdx === realIdx) {
+      const escapedName = (item.filename||'').replace(/"/g,'&quot;');
+      fileLabel = `<input id="rename-input-${realIdx}" type="text" value="${escapedName}"
+        class="rename-input"
+        onblur="saveRename(${realIdx})"
+        onkeydown="if(event.key==='Enter'){this.blur();}if(event.key==='Escape'){cancelRename();}" />`;
+    } else if (item.fileCount > 1) {
+      fileLabel = `<span class="text-gray-800 font-medium text-xs">${item.filename}</span><br><span class="text-gray-400 text-xs">${item.fileCount} arquivos</span>
+        <button onclick="startRename(${realIdx})" class="ml-1 text-gray-300 hover:text-purple-400 transition-colors" title="Renomear"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+    } else {
+      fileLabel = `<div class="flex items-center gap-1"><span class="text-gray-800 font-medium text-xs truncate max-w-[130px]" title="${item.filename}">${item.filename}</span>
+        <button onclick="startRename(${realIdx})" class="text-gray-300 hover:text-purple-400 transition-colors flex-shrink-0" title="Renomear"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div>`;
+    }
+
+    const retryBtn = item.status === 'err'
+      ? `<button onclick="retryItem(${realIdx})" title="Tentar novamente" class="p-1.5 rounded-lg transition-colors" style="color:#d97706;" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+        </button>` : '';
 
     tr.innerHTML = `
+      <td class="pl-4 py-3 w-8"><input type="checkbox" id="cb-${realIdx}" onchange="toggleRowSelect(${realIdx})" ${APP.bulkSelected.has(realIdx)?'checked':''} class="rounded cursor-pointer" style="accent-color:#5B0C8C;" /></td>
       <td class="px-5 py-3">
         <div class="text-xs text-gray-600 whitespace-pre-line leading-4">${dateStr}</div>
         <div class="mt-0.5">${fileLabel}</div>
@@ -1084,7 +1258,7 @@ function renderHistory() {
       <td class="px-4 py-3">${fmtBadge}</td>
       <td class="px-4 py-3 hidden sm:table-cell">${timeStr}</td>
       <td class="px-4 py-3">${statusBadge}</td>
-      <td class="px-4 py-3"><div class="flex items-center gap-1">${viewBtn}${downloadBtn}${deleteBtn}</div></td>
+      <td class="px-4 py-3"><div class="flex items-center gap-0.5">${retryBtn}${viewBtn}${downloadBtn}${deleteBtn}</div></td>
     `;
     body.appendChild(tr);
   });
@@ -1138,7 +1312,7 @@ async function viewItem(idx) {
     const { data, error } = await sb.storage.from('pdfs').download(`${APP.user.id}/${item.id}.pdf`);
     if (!error && data) pdfBlob = data;
   } else if (item.previewBlobs && item.previewBlobs.length) {
-    pdfBlob = await vmBuildPdfFromBlobs(item.previewBlobs);
+    pdfBlob = await vmBuildPdfFromBlobs(item.previewBlobs, item.size);
   }
 
   if (pdfBlob) {
@@ -1150,10 +1324,11 @@ async function viewItem(idx) {
   }
 }
 
-async function vmBuildPdfFromBlobs(blobs) {
+async function vmBuildPdfFromBlobs(blobs, size) {
   try {
     const { jsPDF } = window.jspdf;
-    const w = 4, h = 6;
+    const w = (size && size.w) || 4;
+    const h = (size && size.h) || 6;
     const doc = new jsPDF({ unit: 'in', format: [w, h], orientation: 'portrait' });
     for (let i = 0; i < blobs.length; i++) {
       if (i > 0) doc.addPage([w, h], 'portrait');
@@ -1468,6 +1643,231 @@ function copyPixKey() {
   }).catch(() => showToast('Chave PIX: ' + PIX_KEY, 4000));
 }
 
+// ====== FORGOT PASSWORD ======
+async function doForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const msgEl = document.getElementById('forgot-msg');
+  const btn = document.getElementById('btn-forgot');
+  msgEl.classList.add('hidden');
+  if (!email) { msgEl.textContent = 'Informe seu e-mail.'; msgEl.classList.remove('hidden'); msgEl.style.color='#dc2626'; return; }
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  btn.disabled = false; btn.textContent = 'Enviar link de redefinição';
+  if (error) {
+    msgEl.textContent = error.message || 'Erro ao enviar.';
+    msgEl.classList.remove('hidden'); msgEl.style.color = '#dc2626';
+  } else {
+    msgEl.textContent = '✓ Link de redefinição enviado! Verifique seu e-mail.';
+    msgEl.classList.remove('hidden'); msgEl.style.color = '#5B0C8C';
+  }
+}
+
+// ====== SIZE SELECTOR ======
+function setSize(preset) {
+  const sizes = {'4x6':{w:4,h:6}, '4x4':{w:4,h:4}, '2x1':{w:2,h:1}};
+  const customDiv = document.getElementById('custom-size-inputs');
+  if (preset === 'custom') {
+    if (customDiv) customDiv.classList.remove('hidden');
+  } else {
+    if (customDiv) customDiv.classList.add('hidden');
+    APP.selectedSize = sizes[preset] || {w:4, h:6};
+  }
+  ['4x6','4x4','2x1','custom'].forEach(id => {
+    const btn = document.getElementById('sz-'+id);
+    if (!btn) return;
+    btn.className = 'sz-btn' + (id === preset ? ' active' : '');
+  });
+}
+
+function applyCustomSize() {
+  const w = parseFloat(document.getElementById('custom-w').value) || 4;
+  const h = parseFloat(document.getElementById('custom-h').value) || 6;
+  APP.selectedSize = { w: Math.max(0.5, Math.min(12, w)), h: Math.max(0.5, Math.min(16, h)) };
+  showToast(`Tamanho: ${APP.selectedSize.w}×${APP.selectedSize.h} pol`);
+}
+
+// ====== RETRY ======
+function retryItem(idx) {
+  showToast(APP.lang === 'pt' ? 'Selecione o arquivo novamente para reprocessar' : 'Select the file again to reprocess', 3500);
+  document.getElementById('file-input').click();
+}
+
+// ====== SKELETON LOADING ======
+function showHistorySkeleton() {
+  const section = document.getElementById('history-section');
+  const body = document.getElementById('history-body');
+  if (!body) return;
+  section.classList.remove('hidden');
+  const onboardEl = document.getElementById('hist-onboarding');
+  if (onboardEl) onboardEl.classList.add('hidden');
+  document.getElementById('hist-empty-state').classList.add('hidden');
+  document.getElementById('hist-pagination').classList.add('hidden');
+  let rows = '';
+  for (let i = 0; i < 4; i++) {
+    rows += `<tr class="hist-row">
+      <td class="pl-4 py-3 w-8"><div class="skeleton w-4 h-4"></div></td>
+      <td class="px-5 py-3"><div class="skeleton h-3 mb-1.5" style="width:80px;"></div><div class="skeleton h-3" style="width:120px;"></div></td>
+      <td class="px-4 py-3"><div class="skeleton h-5 rounded-full" style="width:44px;"></div></td>
+      <td class="px-4 py-3"><div class="skeleton h-5 rounded-full" style="width:64px;"></div></td>
+      <td class="px-4 py-3 hidden sm:table-cell"><div class="skeleton h-5 rounded-full" style="width:44px;"></div></td>
+      <td class="px-4 py-3"><div class="skeleton h-5 rounded-full" style="width:52px;"></div></td>
+      <td class="px-4 py-3"><div class="flex gap-1"><div class="skeleton w-6 h-6 rounded-lg"></div><div class="skeleton w-6 h-6 rounded-lg"></div></div></td>
+    </tr>`;
+  }
+  body.innerHTML = rows;
+  document.getElementById('hist-summary-labels').textContent = '…';
+  document.getElementById('hist-summary-convs').textContent = '…';
+}
+
+// ====== BULK SELECTION ======
+function toggleSelectAll(checked) {
+  const filtered = getFilteredHistory();
+  filtered.forEach(item => {
+    const idx = APP.history.indexOf(item);
+    if (checked) APP.bulkSelected.add(idx);
+    else APP.bulkSelected.delete(idx);
+  });
+  updateBulkBar();
+  renderHistory();
+}
+
+function toggleRowSelect(idx) {
+  if (APP.bulkSelected.has(idx)) APP.bulkSelected.delete(idx);
+  else APP.bulkSelected.add(idx);
+  updateBulkBar();
+  // Update checkbox without full re-render
+  const cb = document.getElementById(`cb-${idx}`);
+  if (cb) cb.checked = APP.bulkSelected.has(idx);
+  // Update tr background
+  const tr = cb && cb.closest('tr');
+  if (tr) tr.className = 'hist-row' + (APP.bulkSelected.has(idx) ? ' bg-purple-50' : '');
+  // Update select-all state
+  const selectAllCb = document.getElementById('select-all-cb');
+  if (selectAllCb) {
+    const filtered = getFilteredHistory();
+    const selectedInPage = filtered.filter(item => APP.bulkSelected.has(APP.history.indexOf(item))).length;
+    selectAllCb.checked = selectedInPage === filtered.length && filtered.length > 0;
+    selectAllCb.indeterminate = selectedInPage > 0 && selectedInPage < filtered.length;
+  }
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  const count = APP.bulkSelected.size;
+  if (count > 0) {
+    bar.classList.remove('hidden');
+    document.getElementById('bulk-count').textContent = `${count} selecionado${count > 1 ? 's' : ''}`;
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function clearBulkSelection() {
+  APP.bulkSelected.clear();
+  updateBulkBar();
+  renderHistory();
+}
+
+async function bulkDownloadZip() {
+  const indices = Array.from(APP.bulkSelected);
+  if (!indices.length) return;
+  const btn = document.getElementById('bulk-dl-btn');
+  if (btn) { btn.textContent = 'Preparando…'; btn.disabled = true; }
+  showToast(APP.lang === 'pt' ? 'Preparando ZIP...' : 'Preparing ZIP...', 60000);
+  const zip = new JSZip();
+  let count = 0;
+
+  for (const idx of indices) {
+    const item = APP.history[idx];
+    if (!item || item.status !== 'ok') continue;
+    let pdfBlob = null;
+    if (item.pdf) {
+      pdfBlob = item.pdf;
+    } else if (item.cloudPdf && item.id && APP.user) {
+      const { data, error } = await sb.storage.from('pdfs').download(`${APP.user.id}/${item.id}.pdf`);
+      if (!error && data) pdfBlob = data;
+    }
+    if (pdfBlob) {
+      const fname = (item.filename || `etiqueta_${idx}`).replace(/\.(txt|zpl)$/i, '') + '.pdf';
+      zip.file(fname, pdfBlob);
+      count++;
+    }
+  }
+
+  if (btn) { btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar ZIP'; btn.disabled = false; }
+
+  if (!count) { showToast('Nenhum PDF disponível para baixar.'); return; }
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tiketei_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.zip`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast(`✓ ZIP com ${count} PDF${count > 1 ? 's' : ''} baixado!`);
+  clearBulkSelection();
+}
+
+// ====== INLINE RENAME ======
+function startRename(idx) {
+  APP.renamingIdx = idx;
+  renderHistory();
+  setTimeout(() => {
+    const input = document.getElementById(`rename-input-${idx}`);
+    if (input) { input.focus(); input.select(); }
+  }, 30);
+}
+
+async function saveRename(idx) {
+  if (APP.renamingIdx !== idx) return;
+  const input = document.getElementById(`rename-input-${idx}`);
+  if (!input) return;
+  const newName = input.value.trim();
+  APP.renamingIdx = -1;
+  if (!newName) { renderHistory(); return; }
+  const item = APP.history[idx];
+  if (!item) { renderHistory(); return; }
+  const oldName = item.filename;
+  item.filename = newName;
+  renderHistory();
+  if (APP.user && item.id) {
+    const { error } = await sb.from('conversions').update({ filename: newName }).eq('id', item.id).eq('user_id', APP.user.id);
+    if (error) { item.filename = oldName; showToast('Erro ao salvar nome.'); renderHistory(); }
+    else showToast('✓ Nome atualizado');
+  }
+}
+
+function cancelRename() {
+  APP.renamingIdx = -1;
+  renderHistory();
+}
+
+// ====== DATE RANGE FILTER ======
+function setDateRange() {
+  APP.dateFrom = document.getElementById('date-from').value;
+  APP.dateTo   = document.getElementById('date-to').value;
+  APP.histPage = 1;
+  const clearBtn = document.getElementById('clear-date-range');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !APP.dateFrom && !APP.dateTo);
+  renderHistory();
+}
+
+function clearDateRange() {
+  APP.dateFrom = '';
+  APP.dateTo   = '';
+  const fromEl = document.getElementById('date-from');
+  const toEl   = document.getElementById('date-to');
+  if (fromEl) fromEl.value = '';
+  if (toEl)   toEl.value   = '';
+  const clearBtn = document.getElementById('clear-date-range');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  APP.histPage = 1;
+  renderHistory();
+}
+
 // ====== FEEDBACK ======
 function submitFeedback() {
   const t = document.getElementById('feedback-text').value.trim();
@@ -1482,6 +1882,7 @@ function submitFeedback() {
   const lang = localStorage.getItem('zpl_lang') || 'pt';
   setLang(lang);
   setFormat('Padrão');
+  setSize('4x6');
 
   // Close modals on overlay click
   document.querySelectorAll('.modal-overlay').forEach(el => {
@@ -1501,6 +1902,10 @@ function submitFeedback() {
       || triggers.some(id => { const el=document.getElementById(id); return el&&el.contains(e.target); })
       || e.target.closest('.filter-btn');
     if (!clickedInside) dds.forEach(id => closeDropdown(id));
+    // Cancel rename on outside click
+    if (APP.renamingIdx >= 0 && !e.target.closest('.rename-input') && !e.target.closest('[onclick*="startRename"]')) {
+      cancelRename();
+    }
   });
 
   await initAuth();
