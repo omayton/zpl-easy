@@ -579,7 +579,7 @@ function getPrintableLabelIndices(zpl) {
 
 async function fetchLabel(zpl, index, dpmm, w, h, retry) {
   retry = retry || 0;
-  const url = `https://api.labelary.com/v1/printers/${dpmm}/labels/${w}x${h}/${index}/`;
+  const url = `https://api.labelary.com/v1/printers/${dpmm}dpmm/labels/${w}x${h}/${index}/`;
   let res;
   try {
     res = await fetch(url, {
