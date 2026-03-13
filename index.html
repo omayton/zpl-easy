@@ -11,16 +11,10 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .drop-active { background-color: #f0fdf4 !important; border-color: #16a34a !important; }
-    .status-pronto  { display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#16a34a;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600; }
-    .status-erro    { display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#dc2626;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600; }
-    .status-proc    { display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#d97706;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600; }
-    .fmt-badge      { display:inline-block;background:#ede9fe;color:#7c3aed;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:500; }
-    .fmt-nitidez    { background:#e0f2fe;color:#0369a1; }
     .spin { animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     ::-webkit-scrollbar { width:5px;height:5px; }
     ::-webkit-scrollbar-thumb { background:#d1d5db;border-radius:4px; }
-    select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat;background-position:right 8px center;padding-right:24px !important; }
     .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px; }
     .modal-box { background:#fff;border-radius:16px;padding:28px;width:100%;max-width:420px;position:relative; }
     .auth-tab-active { border-bottom:2px solid #16a34a;color:#15803d;font-weight:600; }
@@ -31,6 +25,15 @@
     .btn-green:hover { background:#15803d; }
     .btn-green:disabled { background:#86efac;cursor:not-allowed; }
     .user-avatar { width:30px;height:30px;border-radius:999px;background:#dcfce7;color:#15803d;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #86efac; }
+    .tag-badge { display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600; }
+    .hist-row:hover { background:#f9fafb; }
+    .hist-row { border-bottom:1px solid #f3f4f6;transition:background 0.1s; }
+    .filter-btn { border:1px solid #e5e7eb;border-radius:8px;padding:6px 12px;font-size:12px;background:#fff;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:background 0.1s; }
+    .filter-btn:hover { background:#f9fafb; }
+    .filter-dd { position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #e5e7eb;border-radius:12px;shadow:0 4px 20px rgba(0,0,0,0.08);z-index:50;min-width:160px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1); }
+    .filter-dd button { width:100%;text-align:left;padding:9px 14px;font-size:13px;background:none;border:none;cursor:pointer; }
+    .filter-dd button:hover { background:#f3f4f6; }
+    .filter-dd button.active { color:#16a34a;font-weight:600; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -40,41 +43,35 @@
   <div class="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between">
     <span class="text-xl font-bold text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0,0)">ZPL Easy</span>
     <div class="flex items-center gap-2">
-      <!-- Apoiar PIX -->
       <button onclick="showModal('pix-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-full hover:bg-red-50 transition-colors">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
         Apoiar <span class="bg-green-600 text-white text-xs px-1.5 py-0.5 rounded font-semibold">PIX</span>
       </button>
-      <!-- Feedback -->
       <button onclick="showModal('feedback-modal')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Feedback
       </button>
       <!-- Language -->
       <div class="relative">
-        <button id="lang-btn" onclick="toggleDropdown('lang-dd','lang-ov')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors" title="Idioma">
+        <button id="lang-btn" onclick="toggleDropdown('lang-dd')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors" title="Idioma">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         </button>
         <div id="lang-dd" class="hidden absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50 min-w-[140px]">
-          <button onclick="setLang('pt')" id="lang-pt-btn" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4 transition-colors">
-            Português
-            <svg id="check-pt" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <button onclick="setLang('pt')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4">
+            Português <svg id="check-pt" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
-          <button onclick="setLang('en')" id="lang-en-btn" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4 transition-colors">
-            English
-            <svg id="check-en" class="hidden" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <button onclick="setLang('en')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between gap-4">
+            English <svg id="check-en" class="hidden" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
         </div>
       </div>
-      <!-- Auth button / user menu -->
-      <div class="relative" id="auth-nav-wrap">
-        <!-- Logged out: Login button -->
+      <!-- Auth -->
+      <div class="relative">
         <button id="nav-login-btn" onclick="openAuthModal('login')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors font-medium">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Entrar
         </button>
-        <!-- Logged in: avatar + dropdown -->
-        <button id="nav-user-btn" onclick="toggleDropdown('user-dd','user-ov')" class="hidden items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
+        <button id="nav-user-btn" onclick="toggleDropdown('user-dd')" class="hidden items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
           <div class="user-avatar" id="nav-avatar">U</div>
           <span id="nav-email-short" class="text-sm text-gray-700 font-medium max-w-[120px] truncate hidden sm:block"></span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -93,12 +90,7 @@
             Sair
           </button>
         </div>
-        <div id="user-ov" class="hidden fixed inset-0 z-40" onclick="closeDropdown('user-dd','user-ov')"></div>
       </div>
-      <!-- Menu burger -->
-      <button onclick="toggleDropdown('lang-dd','lang-ov')" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors hidden">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
     </div>
   </div>
 </nav>
@@ -114,13 +106,10 @@
   <p id="upload-label-text" class="text-sm font-medium text-gray-700 mb-3">Carregue seus arquivos ZPL para convertê-los para o formato PDF</p>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-    <!-- ---- UPLOAD PANEL ---- -->
+    <!-- UPLOAD PANEL -->
     <div id="drop-zone"
          class="border-2 border-dashed border-gray-300 rounded-2xl bg-white p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[220px] select-none"
-         ondragover="handleDragOver(event)"
-         ondragleave="handleDragLeave(event)"
-         ondrop="handleDrop(event)"
+         ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)"
          onclick="document.getElementById('file-input').click()">
       <div class="flex gap-3 mb-4">
         <div class="w-12 h-12 rounded-xl border-2 border-green-500 flex items-center justify-center text-green-600 bg-green-50">
@@ -132,7 +121,7 @@
       </div>
       <p id="drop-main-text" class="font-semibold text-gray-800 text-sm mb-1">Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)</p>
       <p id="formats-text" class="text-gray-400 text-xs">Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL</p>
-      <!-- Format selector -->
+      <p id="merge-hint-text" class="text-green-600 text-xs mt-1.5 font-medium">✓ Vários arquivos serão unidos em um único PDF</p>
       <div class="mt-4 flex gap-2 items-center" onclick="event.stopPropagation()">
         <button id="fmt-padrao" onclick="setFormat('Padrão')"
           class="px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all">
@@ -146,7 +135,7 @@
       <input type="file" id="file-input" multiple accept=".txt,.zpl,.zip" class="hidden" onchange="handleFileInput(event)" />
     </div>
 
-    <!-- ---- PREVIEW PANEL ---- -->
+    <!-- PREVIEW PANEL -->
     <div id="preview-panel" class="bg-white rounded-2xl border border-gray-200 p-5 min-h-[220px] flex flex-col">
       <div id="preview-empty" class="flex-1 flex flex-col items-center justify-center text-gray-400">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-2 opacity-40"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
@@ -172,7 +161,7 @@
     </div>
   </div>
 
-  <!-- ---- PROGRESS BAR ---- -->
+  <!-- PROGRESS BAR -->
   <div id="progress-bar-wrap" class="hidden mt-4 bg-white rounded-xl border border-gray-200 px-4 py-3">
     <div class="flex items-center justify-between mb-1.5">
       <span id="progress-label" class="text-xs text-gray-600 font-medium"></span>
@@ -183,78 +172,129 @@
     </div>
   </div>
 
-  <!-- ---- HISTORY TABLE ---- -->
-  <div id="history-section" class="mt-6 hidden">
-    <div class="flex items-center justify-between mb-3">
-      <h2 id="history-title" class="text-sm font-semibold text-gray-800">Histórico de Conversões</h2>
-      <div class="flex gap-2">
-        <button onclick="clearHistory()" class="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          Limpar
-        </button>
+  <!-- ===== HISTORY SECTION ===== -->
+  <div id="history-section" class="mt-8 hidden">
+
+    <!-- Header verde -->
+    <div class="bg-green-600 rounded-t-2xl px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="12 5 12 12 16 14"/><circle cx="12" cy="12" r="10"/></svg>
+        <span id="hist-title" class="text-white font-semibold text-sm">Histórico de Processamento</span>
+      </div>
+      <span id="hist-total-badge" class="text-green-100 text-xs font-medium"></span>
+    </div>
+
+    <!-- Resumo -->
+    <div class="bg-green-50 border-x border-green-100 px-5 py-2.5 flex items-center gap-4 flex-wrap">
+      <div class="flex items-center gap-1.5 text-green-700 text-xs font-medium">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span id="hist-summary-labels"></span>
+      </div>
+      <span class="text-green-300">•</span>
+      <div class="flex items-center gap-1.5 text-green-700 text-xs font-medium">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span id="hist-summary-convs"></span>
       </div>
     </div>
-    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+
+    <!-- Filtros e busca -->
+    <div class="bg-white border-x border-gray-200 px-5 py-3 flex items-center gap-3 flex-wrap">
+      <div class="flex-1 min-w-[160px] relative">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" class="absolute left-3 top-1/2 -translate-y-1/2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="hist-search" type="text" placeholder="Buscar..." oninput="renderHistory()"
+          class="w-full pl-8 pr-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:border-green-400 bg-gray-50" />
+      </div>
+      <!-- Date filter -->
+      <div class="relative">
+        <button onclick="toggleDropdown('date-filter-dd')" class="filter-btn">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="date-filter-label">Todas as datas</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="date-filter-dd" class="filter-dd hidden">
+          <button onclick="setDateFilter('all')" class="active">Todas as datas</button>
+          <button onclick="setDateFilter('today')">Hoje</button>
+          <button onclick="setDateFilter('week')">Esta semana</button>
+          <button onclick="setDateFilter('month')">Este mês</button>
+        </div>
+      </div>
+      <!-- Status filter -->
+      <div class="relative">
+        <button onclick="toggleDropdown('type-filter-dd')" class="filter-btn">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <span id="type-filter-label">Todos os tipos</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="type-filter-dd" class="filter-dd hidden">
+          <button onclick="setTypeFilter('all')" class="active">Todos os tipos</button>
+          <button onclick="setTypeFilter('ok')">✓ Pronto</button>
+          <button onclick="setTypeFilter('err')">✗ Erro</button>
+        </div>
+      </div>
+      <!-- Clear -->
+      <button onclick="clearHistory()" class="filter-btn text-red-400 border-red-100 hover:bg-red-50 ml-auto">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Limpar
+      </button>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white rounded-b-2xl border border-gray-200 border-t-0 overflow-hidden">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-gray-100 bg-gray-50">
-            <th id="th-file" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Arquivo</th>
-            <th id="th-labels" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Etiquetas</th>
-            <th id="th-format" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Formato</th>
-            <th id="th-time" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Tempo</th>
-            <th id="th-status" class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-            <th class="px-4 py-2.5"></th>
+            <th id="th-date"   class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</th>
+            <th id="th-labels" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantidade de Etiquetas</th>
+            <th id="th-format" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Formato de Impressão</th>
+            <th id="th-time"   class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Processando...</th>
+            <th id="th-status" class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+            <th class="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody id="history-body"></tbody>
       </table>
+
+      <!-- Empty state -->
+      <div id="hist-empty-state" class="hidden py-10 text-center text-gray-400">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-2 opacity-40"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p class="text-sm">Nenhuma conversão encontrada</p>
+      </div>
+
+      <!-- Pagination -->
+      <div id="hist-pagination" class="hidden border-t border-gray-100 px-5 py-3 flex items-center justify-center gap-2">
+      </div>
     </div>
+
+    <!-- Note -->
+    <p class="text-xs text-gray-400 mt-2 px-1">Registros com mais de 60 dias são excluídos automaticamente.</p>
   </div>
 </main>
 
 <!-- ======================== AUTH MODAL ======================== -->
 <div id="auth-modal" class="modal-overlay hidden">
   <div class="modal-box">
-    <button onclick="hideModal('auth-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+    <button onclick="hideModal('auth-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div class="mb-5 text-center">
       <span class="text-xl font-bold text-gray-900">ZPL Easy</span>
       <p class="text-gray-500 text-sm mt-1">Salve seu histórico na nuvem</p>
     </div>
-    <!-- Tabs -->
     <div class="flex gap-0 border-b border-gray-200 mb-5">
       <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 pb-2.5 text-sm auth-tab-active">Entrar</button>
       <button id="tab-register" onclick="switchAuthTab('register')" class="flex-1 pb-2.5 text-sm auth-tab">Criar conta</button>
     </div>
-    <!-- Login form -->
     <div id="form-login">
-      <div class="mb-3">
-        <label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label>
-        <input id="login-email" type="email" placeholder="seu@email.com" class="input-field" autocomplete="email" />
-      </div>
-      <div class="mb-4">
-        <label class="block text-xs font-medium text-gray-600 mb-1">Senha</label>
-        <input id="login-password" type="password" placeholder="••••••••" class="input-field" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
-      </div>
+      <div class="mb-3"><label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label><input id="login-email" type="email" placeholder="seu@email.com" class="input-field" autocomplete="email" /></div>
+      <div class="mb-4"><label class="block text-xs font-medium text-gray-600 mb-1">Senha</label><input id="login-password" type="password" placeholder="••••••••" class="input-field" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
       <p id="login-error" class="text-red-500 text-xs mb-3 hidden"></p>
       <button onclick="doLogin()" id="btn-login" class="btn-green">Entrar</button>
       <p class="text-center text-xs text-gray-400 mt-3">Não tem conta? <button onclick="switchAuthTab('register')" class="text-green-600 font-medium hover:underline">Criar agora</button></p>
     </div>
-    <!-- Register form -->
     <div id="form-register" class="hidden">
-      <div class="mb-3">
-        <label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label>
-        <input id="reg-email" type="email" placeholder="seu@email.com" class="input-field" autocomplete="email" />
-      </div>
-      <div class="mb-3">
-        <label class="block text-xs font-medium text-gray-600 mb-1">Senha</label>
-        <input id="reg-password" type="password" placeholder="Mínimo 6 caracteres" class="input-field" autocomplete="new-password" />
-      </div>
-      <div class="mb-4">
-        <label class="block text-xs font-medium text-gray-600 mb-1">Confirmar senha</label>
-        <input id="reg-confirm" type="password" placeholder="Repita a senha" class="input-field" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" />
-      </div>
+      <div class="mb-3"><label class="block text-xs font-medium text-gray-600 mb-1">E-mail</label><input id="reg-email" type="email" placeholder="seu@email.com" class="input-field" /></div>
+      <div class="mb-3"><label class="block text-xs font-medium text-gray-600 mb-1">Senha</label><input id="reg-password" type="password" placeholder="Mínimo 6 caracteres" class="input-field" /></div>
+      <div class="mb-4"><label class="block text-xs font-medium text-gray-600 mb-1">Confirmar senha</label><input id="reg-confirm" type="password" placeholder="Repita a senha" class="input-field" onkeydown="if(event.key==='Enter')doRegister()" /></div>
       <p id="reg-error" class="text-red-500 text-xs mb-3 hidden"></p>
       <p id="reg-success" class="text-green-600 text-xs mb-3 hidden"></p>
       <button onclick="doRegister()" id="btn-register" class="btn-green">Criar conta</button>
@@ -267,15 +307,10 @@
 <div id="pix-modal" class="modal-overlay hidden">
   <div class="modal-box max-w-sm text-center">
     <button onclick="hideModal('pix-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="#dc2626"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-    </div>
+    <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3"><svg width="22" height="22" viewBox="0 0 24 24" fill="#dc2626"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
     <h3 class="text-lg font-bold text-gray-900 mb-1">Apoiar o ZPL Easy</h3>
-    <p id="pix-desc" class="text-sm text-gray-500 mb-4">Esta ferramenta é gratuita e mantida com muito carinho. Se ela te ajudou, considere fazer uma contribuição via PIX:</p>
-    <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-4">
-      <p class="text-xs text-gray-400 mb-1" id="pix-key-label">Chave PIX (e-mail)</p>
-      <p class="font-mono text-sm font-semibold text-gray-800 select-all">exemplo@email.com</p>
-    </div>
+    <p class="text-sm text-gray-500 mb-4">Esta ferramenta é gratuita e mantida com muito carinho. Se ela te ajudou, considere uma contribuição via PIX:</p>
+    <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-4"><p class="text-xs text-gray-400 mb-1">Chave PIX (e-mail)</p><p class="font-mono text-sm font-semibold text-gray-800 select-all">exemplo@email.com</p></div>
     <button onclick="hideModal('pix-modal')" class="btn-green">Fechar</button>
   </div>
 </div>
@@ -285,19 +320,19 @@
   <div class="modal-box max-w-sm">
     <button onclick="hideModal('feedback-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3 class="text-lg font-bold text-gray-900 mb-1">Feedback</h3>
-    <p id="feedback-desc" class="text-sm text-gray-500 mb-3">Sua opinião nos ajuda a melhorar o ZPL Easy.</p>
+    <p class="text-sm text-gray-500 mb-3">Sua opinião nos ajuda a melhorar o ZPL Easy.</p>
     <textarea id="feedback-text" rows="4" placeholder="Descreva sua experiência, problemas ou sugestões..." class="input-field resize-none mb-3"></textarea>
     <button onclick="submitFeedback()" class="btn-green">Enviar</button>
   </div>
 </div>
 
-<!-- ======================== TOAST ======================== -->
+<!-- TOAST -->
 <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
   <div id="toast-inner" class="hidden bg-gray-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-lg max-w-xs text-center"></div>
 </div>
 
 <script>
-// ====== SUPABASE INIT ======
+// ====== SUPABASE ======
 const SUPABASE_URL = 'https://tjkuwbgqjlpoztwcetid.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqa3V3Ymdxamxwb3p0d2NldGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjY2NTgsImV4cCI6MjA4ODg0MjY1OH0.WodidW0F3AmkS-KJR610d6o9XP2c_WVJN2G4fxd5tFI';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -308,533 +343,448 @@ const APP = {
   history: [],
   previewImgs: [],
   previewIdx: 0,
-  currentFile: null,
   selectedFormat: 'Padrão',
   user: null,
-  pendingPdfBlobs: {} // convId -> pdfBlob for upload
+  // filters
+  dateFilter: 'all',
+  typeFilter: 'all',
+  histPage: 1,
+  PAGE_SIZE: 10,
 };
 
-// ====== AUTH INIT ======
+// ====== AUTH ======
 async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    APP.user = session.user;
-    updateNavAuth();
-    await loadHistory();
-  }
-
+  if (session) { APP.user = session.user; updateNavAuth(); await loadHistory(); }
   sb.auth.onAuthStateChange(async (event, session) => {
     APP.user = session ? session.user : null;
     updateNavAuth();
-    if (APP.user) {
-      await loadHistory();
-    } else {
-      APP.history = [];
-      renderHistory();
-    }
+    if (APP.user) { await loadHistory(); } else { APP.history = []; renderHistory(); }
   });
 }
 
 function updateNavAuth() {
   const loginBtn = document.getElementById('nav-login-btn');
-  const userBtn = document.getElementById('nav-user-btn');
-  const avatar = document.getElementById('nav-avatar');
-  const emailShort = document.getElementById('nav-email-short');
-  const ddEmail = document.getElementById('dd-email');
-
+  const userBtn  = document.getElementById('nav-user-btn');
   if (APP.user) {
     loginBtn.classList.add('hidden');
-    userBtn.classList.remove('hidden');
-    userBtn.classList.add('flex');
+    userBtn.classList.remove('hidden'); userBtn.classList.add('flex');
     const email = APP.user.email || '';
-    const initials = email.substring(0, 2).toUpperCase();
-    if (avatar) avatar.textContent = initials;
-    if (emailShort) emailShort.textContent = email;
-    if (ddEmail) ddEmail.textContent = email;
+    document.getElementById('nav-avatar').textContent = email.substring(0,2).toUpperCase();
+    document.getElementById('nav-email-short').textContent = email;
+    document.getElementById('dd-email').textContent = email;
   } else {
     loginBtn.classList.remove('hidden');
-    userBtn.classList.add('hidden');
-    userBtn.classList.remove('flex');
+    userBtn.classList.add('hidden'); userBtn.classList.remove('flex');
   }
 }
 
 async function handleLogout() {
-  closeDropdown('user-dd', 'user-ov');
+  closeDropdown('user-dd');
   await sb.auth.signOut();
   showToast(APP.lang === 'pt' ? 'Sessão encerrada' : 'Signed out');
 }
 
-function openAuthModal(tab) {
-  switchAuthTab(tab || 'login');
-  showModal('auth-modal');
-}
+function openAuthModal(tab) { switchAuthTab(tab || 'login'); showModal('auth-modal'); }
 
 function switchAuthTab(tab) {
-  const tabs = ['login', 'register'];
-  tabs.forEach(t => {
-    document.getElementById('tab-' + t).className = 'flex-1 pb-2.5 text-sm ' + (t === tab ? 'auth-tab-active' : 'auth-tab');
-    document.getElementById('form-' + t).classList.toggle('hidden', t !== tab);
+  ['login','register'].forEach(t => {
+    document.getElementById('tab-'+t).className = 'flex-1 pb-2.5 text-sm ' + (t===tab ? 'auth-tab-active' : 'auth-tab');
+    document.getElementById('form-'+t).classList.toggle('hidden', t!==tab);
   });
-  // Clear errors
-  ['login-error','reg-error','reg-success'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.textContent = ''; el.classList.add('hidden'); }
-  });
+  ['login-error','reg-error','reg-success'].forEach(id => { const el=document.getElementById(id); if(el){el.textContent='';el.classList.add('hidden');} });
 }
 
 async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const errEl = document.getElementById('login-error');
-  const btn = document.getElementById('btn-login');
+  const email=document.getElementById('login-email').value.trim(), pw=document.getElementById('login-password').value;
+  const errEl=document.getElementById('login-error'), btn=document.getElementById('btn-login');
   errEl.classList.add('hidden');
-
-  if (!email || !password) {
-    errEl.textContent = APP.lang === 'pt' ? 'Preencha todos os campos.' : 'Fill all fields.';
-    errEl.classList.remove('hidden');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = APP.lang === 'pt' ? 'Entrando...' : 'Signing in...';
-
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
-  btn.disabled = false;
-  btn.textContent = APP.lang === 'pt' ? 'Entrar' : 'Sign in';
-
-  if (error) {
-    errEl.textContent = APP.lang === 'pt'
-      ? 'E-mail ou senha incorretos.'
-      : 'Incorrect email or password.';
-    errEl.classList.remove('hidden');
-  } else {
-    hideModal('auth-modal');
-    showToast(APP.lang === 'pt' ? 'Bem-vindo! ✓' : 'Welcome! ✓');
-  }
+  if(!email||!pw){errEl.textContent='Preencha todos os campos.';errEl.classList.remove('hidden');return;}
+  btn.disabled=true; btn.textContent='Entrando...';
+  const {error}=await sb.auth.signInWithPassword({email,password:pw});
+  btn.disabled=false; btn.textContent='Entrar';
+  if(error){errEl.textContent='E-mail ou senha incorretos.';errEl.classList.remove('hidden');}
+  else{hideModal('auth-modal');showToast('Bem-vindo! ✓');}
 }
 
 async function doRegister() {
-  const email = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const confirm = document.getElementById('reg-confirm').value;
-  const errEl = document.getElementById('reg-error');
-  const succEl = document.getElementById('reg-success');
-  const btn = document.getElementById('btn-register');
-  errEl.classList.add('hidden');
-  succEl.classList.add('hidden');
-
-  if (!email || !password || !confirm) {
-    errEl.textContent = APP.lang === 'pt' ? 'Preencha todos os campos.' : 'Fill all fields.';
-    errEl.classList.remove('hidden');
-    return;
-  }
-  if (password.length < 6) {
-    errEl.textContent = APP.lang === 'pt' ? 'Senha deve ter no mínimo 6 caracteres.' : 'Password must be at least 6 characters.';
-    errEl.classList.remove('hidden');
-    return;
-  }
-  if (password !== confirm) {
-    errEl.textContent = APP.lang === 'pt' ? 'As senhas não coincidem.' : 'Passwords do not match.';
-    errEl.classList.remove('hidden');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = APP.lang === 'pt' ? 'Criando conta...' : 'Creating account...';
-
-  const { data, error } = await sb.auth.signUp({ email, password });
-
-  btn.disabled = false;
-  btn.textContent = APP.lang === 'pt' ? 'Criar conta' : 'Create account';
-
-  if (error) {
-    errEl.textContent = error.message || (APP.lang === 'pt' ? 'Erro ao criar conta.' : 'Error creating account.');
-    errEl.classList.remove('hidden');
-  } else {
-    // Check if auto-confirmed or needs email confirmation
-    if (data.user && data.session) {
-      hideModal('auth-modal');
-      showToast(APP.lang === 'pt' ? 'Conta criada! Bem-vindo ✓' : 'Account created! Welcome ✓');
-    } else {
-      succEl.textContent = APP.lang === 'pt'
-        ? 'Conta criada! Verifique seu e-mail para confirmar.'
-        : 'Account created! Check your email to confirm.';
-      succEl.classList.remove('hidden');
-    }
-  }
+  const email=document.getElementById('reg-email').value.trim(), pw=document.getElementById('reg-password').value, conf=document.getElementById('reg-confirm').value;
+  const errEl=document.getElementById('reg-error'), succEl=document.getElementById('reg-success'), btn=document.getElementById('btn-register');
+  errEl.classList.add('hidden'); succEl.classList.add('hidden');
+  if(!email||!pw||!conf){errEl.textContent='Preencha todos os campos.';errEl.classList.remove('hidden');return;}
+  if(pw.length<6){errEl.textContent='Senha deve ter no mínimo 6 caracteres.';errEl.classList.remove('hidden');return;}
+  if(pw!==conf){errEl.textContent='As senhas não coincidem.';errEl.classList.remove('hidden');return;}
+  btn.disabled=true; btn.textContent='Criando conta...';
+  const {data,error}=await sb.auth.signUp({email,password:pw});
+  btn.disabled=false; btn.textContent='Criar conta';
+  if(error){errEl.textContent=error.message||'Erro ao criar conta.';errEl.classList.remove('hidden');}
+  else if(data.session){hideModal('auth-modal');showToast('Conta criada! Bem-vindo ✓');}
+  else{succEl.textContent='Conta criada! Verifique seu e-mail para confirmar.';succEl.classList.remove('hidden');}
 }
 
 // ====== SUPABASE HISTORY ======
 async function loadHistory() {
-  if (!APP.user) return;
-  const { data, error } = await sb
-    .from('conversions')
-    .select('*')
-    .eq('user_id', APP.user.id)
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  if (error) { console.warn('loadHistory error', error); return; }
-  APP.history = (data || []).map(row => ({
-    id: row.id,
-    filename: row.filename,
-    labelCount: row.label_count,
-    format: row.format,
-    time: row.processing_time,
-    status: row.status,
-    error: row.error_msg,
-    cloudPdf: true, // fetched from cloud
-    createdAt: row.created_at,
-    zpl: row.zpl_content
+  if(!APP.user) return;
+  const {data,error}=await sb.from('conversions').select('*').eq('user_id',APP.user.id).order('created_at',{ascending:false}).limit(200);
+  if(error){console.warn('loadHistory error',error);return;}
+  APP.history=(data||[]).map(row=>({
+    id:row.id, filename:row.filename, labelCount:row.label_count, format:row.format,
+    time:row.processing_time, status:row.status, error:row.error_msg,
+    cloudPdf:true, createdAt:row.created_at,
   }));
   renderHistory();
 }
 
 async function saveConversionToCloud(item, pdfBlob) {
-  if (!APP.user) return null;
-
-  const { data: row, error: insertErr } = await sb.from('conversions').insert({
-    user_id: APP.user.id,
-    filename: item.filename,
-    label_count: item.labelCount,
-    format: item.format,
-    processing_time: item.time,
-    status: item.status,
-    error_msg: item.error || null,
-    zpl_content: item.zpl ? item.zpl.substring(0, 50000) : null // cap at 50k chars
+  if(!APP.user) return null;
+  const {data:row,error}=await sb.from('conversions').insert({
+    user_id:APP.user.id, filename:item.filename, label_count:item.labelCount,
+    format:item.format, processing_time:item.time, status:item.status, error_msg:item.error||null,
   }).select().single();
-
-  if (insertErr) { console.warn('insert error', insertErr); return null; }
-
-  if (pdfBlob && row) {
-    const path = `${APP.user.id}/${row.id}.pdf`;
-    const { error: uploadErr } = await sb.storage.from('pdfs').upload(path, pdfBlob, {
-      contentType: 'application/pdf',
-      upsert: true
-    });
-    if (uploadErr) console.warn('pdf upload error', uploadErr);
+  if(error){console.warn('insert error',error);return null;}
+  if(pdfBlob&&row){
+    const path=`${APP.user.id}/${row.id}.pdf`;
+    const {error:upErr}=await sb.storage.from('pdfs').upload(path,pdfBlob,{contentType:'application/pdf',upsert:true});
+    if(upErr) console.warn('pdf upload error',upErr);
   }
-
-  return row ? row.id : null;
+  return row?row.id:null;
 }
 
 async function deleteCloudConversion(id) {
-  if (!APP.user) return;
-  // Delete PDF from storage
-  const path = `${APP.user.id}/${id}.pdf`;
-  await sb.storage.from('pdfs').remove([path]);
-  // Delete record
-  await sb.from('conversions').delete().eq('id', id).eq('user_id', APP.user.id);
+  if(!APP.user) return;
+  await sb.storage.from('pdfs').remove([`${APP.user.id}/${id}.pdf`]);
+  await sb.from('conversions').delete().eq('id',id).eq('user_id',APP.user.id);
 }
 
 async function downloadCloudPdf(id, filename) {
-  if (!APP.user) return;
-  const path = `${APP.user.id}/${id}.pdf`;
-  const { data, error } = await sb.storage.from('pdfs').download(path);
-  if (error || !data) {
-    showToast(APP.lang === 'pt' ? 'PDF não disponível.' : 'PDF not available.');
-    return;
-  }
-  const url = URL.createObjectURL(data);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = (filename || 'etiqueta') + '.pdf';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  if(!APP.user) return;
+  const {data,error}=await sb.storage.from('pdfs').download(`${APP.user.id}/${id}.pdf`);
+  if(error||!data){showToast('PDF não disponível.');return;}
+  const url=URL.createObjectURL(data);
+  const a=document.createElement('a'); a.href=url; a.download=(filename||'etiqueta')+'.pdf'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
 }
 
-// ====== HISTORY LOCAL (fallback when not logged in) ======
+// ====== LOCAL HISTORY (fallback) ======
 function loadLocalHistory() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('zpl_history') || '[]');
-    APP.history = saved;
-    renderHistory();
-  } catch(e) {
-    APP.history = [];
-  }
+  try { APP.history=JSON.parse(localStorage.getItem('zpl_history')||'[]'); renderHistory(); } catch(e){APP.history=[];}
 }
-
 function saveLocalHistory() {
-  const safe = APP.history.slice(0, 50).map(h => ({...h, pdf: undefined, previewBlobs: undefined}));
-  try { localStorage.setItem('zpl_history', JSON.stringify(safe)); } catch(e) {}
+  try { localStorage.setItem('zpl_history',JSON.stringify(APP.history.slice(0,100).map(h=>({...h,pdf:undefined,previewBlobs:undefined})))); } catch(e){}
 }
 
 // ====== ZPL PROCESSING ======
 function isPrintableLabel(block) {
-  const inner = block.replace(/\^XA|\^XZ|\^FS/gi, '').replace(/\s+/g, '');
-  if (/^\^ID[RDFN]/i.test(inner)) return false;
-  if (/^\^ID/.test(inner) && inner.length < 20) return false;
-  if (inner.length < 4) return false;
+  const inner=block.replace(/\^XA|\^XZ|\^FS/gi,'').replace(/\s+/g,'');
+  if(/^\^ID[RDFN]/i.test(inner)) return false;
+  if(inner.length<4) return false;
   return true;
 }
-
 function getPrintableLabelIndices(zpl) {
-  const m = zpl.match(/\^XA[\s\S]*?\^XZ/gi);
-  if (!m) return [0];
-  const indices = [];
-  m.forEach((block, i) => { if (isPrintableLabel(block)) indices.push(i); });
-  return indices.length ? indices : [0];
+  const m=zpl.match(/\^XA[\s\S]*?\^XZ/gi);
+  if(!m) return [0];
+  const indices=[];
+  m.forEach((block,i)=>{if(isPrintableLabel(block))indices.push(i);});
+  return indices.length?indices:[0];
 }
-
-async function fetchLabel(zpl, index, dpmm, w, h, retry) {
-  retry = retry || 0;
-  const url = `https://api.labelary.com/v1/printers/${dpmm}dpmm/labels/${w}x${h}/${index}/`;
+async function fetchLabel(zpl,index,dpmm,w,h,retry) {
+  retry=retry||0;
+  const url=`https://api.labelary.com/v1/printers/${dpmm}dpmm/labels/${w}x${h}/${index}/`;
   let res;
   try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Accept': 'image/png', 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: zpl
-    });
+    res=await fetch(url,{method:'POST',headers:{'Accept':'image/png','Content-Type':'application/x-www-form-urlencoded'},body:zpl});
   } catch(e) {
-    if (retry < 2) {
-      await new Promise(r => setTimeout(r, 800));
-      return fetchLabel(zpl, index, dpmm, w, h, retry + 1);
-    }
+    if(retry<2){await delay(800);return fetchLabel(zpl,index,dpmm,w,h,retry+1);}
     throw new Error('Falha de rede ao conectar com a API Labelary.');
   }
-  if (res.status === 404) return null;
-  if (res.status === 429) {
-    if (retry < 3) {
-      await new Promise(r => setTimeout(r, 1200 * (retry + 1)));
-      return fetchLabel(zpl, index, dpmm, w, h, retry + 1);
-    }
+  if(res.status===404) return null;
+  if(res.status===429){
+    if(retry<3){await delay(1200*(retry+1));return fetchLabel(zpl,index,dpmm,w,h,retry+1);}
     throw new Error('Limite de requisições da API Labelary atingido.');
   }
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`Labelary retornou erro ${res.status}${body ? ': ' + body.substring(0, 120) : ''}`);
-  }
-  const blob = await res.blob();
-  if (!blob || blob.size === 0) return null;
+  if(!res.ok){const body=await res.text().catch(()=>'');throw new Error(`Labelary retornou erro ${res.status}${body?': '+body.substring(0,120):''}`);}
+  const blob=await res.blob();
+  if(!blob||blob.size===0) return null;
   return blob;
 }
-
-function blobToDataUrl(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function blobToDataUrl(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(blob);});}
 async function extractZplFiles(file) {
-  if (file.name.toLowerCase().endsWith('.zip')) {
-    const zip = await JSZip.loadAsync(file);
-    const results = [];
-    for (const name of Object.keys(zip.files)) {
-      const entry = zip.files[name];
-      if (!entry.dir && /\.(zpl|txt)$/i.test(name)) {
-        const content = await entry.async('string');
-        results.push({ name: name.split('/').pop(), content });
-      }
+  if(file.name.toLowerCase().endsWith('.zip')){
+    const zip=await JSZip.loadAsync(file); const results=[];
+    for(const name of Object.keys(zip.files)){
+      const entry=zip.files[name];
+      if(!entry.dir&&/\.(zpl|txt)$/i.test(name)){const content=await entry.async('string');results.push({name:name.split('/').pop(),content});}
     }
     return results;
   }
-  const content = await file.text();
-  return [{ name: file.name, content }];
+  return [{name:file.name,content:await file.text()}];
 }
 
+// ====== PROCESS FILES (todos viram 1 PDF) ======
 async function processFiles(files) {
   const fmt = APP.selectedFormat || 'Padrão';
   const dpmm = fmt === 'Nitidez+' ? 12 : 8;
+  const w = 4, h = 6;
 
   showProgressBar(true);
 
+  // Extrair todos os ZPLs
   let allFiles = [];
-  for (const f of files) {
-    const extracted = await extractZplFiles(f);
-    allFiles = allFiles.concat(extracted);
-  }
+  for (const f of files) allFiles = allFiles.concat(await extractZplFiles(f));
+  const fileCount = allFiles.length;
 
-  const total = allFiles.length;
+  // Nome do lote
+  const batchName = fileCount === 1
+    ? allFiles[0].name
+    : `${fileCount} arquivos`;
 
-  for (let fi = 0; fi < total; fi++) {
-    const { name, content } = allFiles[fi];
-    const zpl = content.trim();
-    const start = Date.now();
+  const start = Date.now();
+  const batchKey = Date.now();
 
-    updateProgress(name, fi, total);
-    addOrUpdateHistoryItem({ filename: name, labelCount: 0, format: fmt, time: 0, status: 'proc', zpl });
+  // Entrada "em processamento"
+  const procItem = { _key: batchKey, filename: batchName, fileCount, labelCount: 0, format: fmt, time: 0, status: 'proc', createdAt: new Date().toISOString() };
+  APP.history.unshift(procItem);
+  renderHistory();
 
-    try {
+  try {
+    const imgs = [];
+    const previewBlobs = [];
+    let totalLabels = 0;
+
+    for (let fi = 0; fi < allFiles.length; fi++) {
+      const { name, content } = allFiles[fi];
+      const zpl = content.trim();
       const labelIndices = getPrintableLabelIndices(zpl);
-      const w = 4, h = 6;
-      const imgs = [];
-      const previewBlobs = [];
+      const totalSteps = allFiles.length * labelIndices.length;
 
       for (let i = 0; i < labelIndices.length; i++) {
+        const step = fi * labelIndices.length + i;
+        const label = fileCount > 1 ? `${name} (${i+1}/${labelIndices.length})` : `Etiqueta ${i+1} de ${labelIndices.length}`;
+        updateProgress(label, step, totalSteps || 1);
+
         const blob = await fetchLabel(zpl, labelIndices[i], dpmm, w, h);
-        if (blob) {
-          imgs.push(blob);
-          previewBlobs.push(blob);
-        }
-        updateProgress(name, fi * labelIndices.length + i, total * labelIndices.length);
-      }
-
-      if (!imgs.length) throw new Error('A API Labelary não conseguiu gerar nenhuma imagem.');
-
-      // Build PDF
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'in', format: [4, 6], orientation: 'portrait' });
-
-      for (let i = 0; i < imgs.length; i++) {
-        if (i > 0) doc.addPage([4, 6], 'portrait');
-        const dataUrl = await blobToDataUrl(imgs[i]);
-        doc.addImage(dataUrl, 'PNG', 0, 0, 4, 6);
-      }
-
-      const pdfBlob = doc.output('blob');
-      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-
-      const histItem = {
-        filename: name,
-        labelCount: imgs.length,
-        format: fmt,
-        time: parseFloat(elapsed),
-        status: 'ok',
-        previewBlobs,
-        pdf: pdfBlob,
-        zpl
-      };
-
-      addOrUpdateHistoryItem(histItem);
-
-      // Set preview
-      if (previewBlobs.length) {
-        APP.previewImgs = previewBlobs.map(b => URL.createObjectURL(b));
-        APP.previewIdx = 0;
-        showPreview(name, previewBlobs);
-      }
-
-      // Save to cloud or local
-      if (APP.user) {
-        const cloudId = await saveConversionToCloud(histItem, pdfBlob);
-        if (cloudId) {
-          // Update item with cloud id
-          const idx = APP.history.findIndex(h => h.filename === name && h.status === 'ok');
-          if (idx >= 0) { APP.history[idx].id = cloudId; APP.history[idx].cloudPdf = true; }
-          renderHistory();
-        }
-      } else {
-        saveLocalHistory();
-      }
-
-    } catch(err) {
-      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-      const histItem = {
-        filename: name,
-        labelCount: 0,
-        format: fmt,
-        time: parseFloat(elapsed),
-        status: 'err',
-        error: err.message,
-        zpl
-      };
-      addOrUpdateHistoryItem(histItem);
-
-      if (APP.user) {
-        await saveConversionToCloud(histItem, null);
-      } else {
-        saveLocalHistory();
+        if (blob) { imgs.push(blob); previewBlobs.push(blob); totalLabels++; }
       }
     }
+
+    if (!imgs.length) throw new Error('A API Labelary não conseguiu gerar nenhuma imagem de nenhum arquivo.');
+
+    // Gerar PDF único
+    updateProgress(APP.lang === 'pt' ? 'Gerando PDF...' : 'Generating PDF...', 1, 1);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'in', format: [w, h], orientation: 'portrait' });
+    for (let i = 0; i < imgs.length; i++) {
+      if (i > 0) doc.addPage([w, h], 'portrait');
+      doc.addImage(await blobToDataUrl(imgs[i]), 'PNG', 0, 0, w, h);
+    }
+    const pdfBlob = doc.output('blob');
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+
+    const doneItem = { _key: batchKey, filename: batchName, fileCount, labelCount: totalLabels, format: fmt, time: parseFloat(elapsed), status: 'ok', pdf: pdfBlob, previewBlobs, createdAt: new Date().toISOString() };
+    replaceHistoryItem(batchKey, doneItem);
+
+    // Preview
+    APP.previewImgs = previewBlobs.map(b => URL.createObjectURL(b));
+    APP.previewIdx = 0;
+    showPreview(batchName, previewBlobs);
+
+    // Cloud / local
+    if (APP.user) {
+      const cloudId = await saveConversionToCloud(doneItem, pdfBlob);
+      if (cloudId) {
+        const idx = APP.history.findIndex(h => h._key === batchKey);
+        if (idx >= 0) { APP.history[idx].id = cloudId; APP.history[idx].cloudPdf = true; }
+        renderHistory();
+      }
+    } else {
+      saveLocalHistory();
+    }
+
+  } catch(err) {
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    const errItem = { _key: batchKey, filename: batchName, fileCount, labelCount: 0, format: fmt, time: parseFloat(elapsed), status: 'err', error: err.message, createdAt: new Date().toISOString() };
+    replaceHistoryItem(batchKey, errItem);
+    if (APP.user) await saveConversionToCloud(errItem, null);
+    else saveLocalHistory();
   }
 
   showProgressBar(false);
 }
 
-// ====== HISTORY RENDERING ======
-function addOrUpdateHistoryItem(item) {
-  const existing = APP.history.findIndex(h => h.filename === item.filename && (h.status === 'proc' || h.status === item.status));
-  if (existing >= 0) {
-    APP.history[existing] = { ...APP.history[existing], ...item };
-  } else {
-    APP.history.unshift(item);
-    if (APP.history.length > 100) APP.history.pop();
-  }
+function replaceHistoryItem(key, newItem) {
+  const idx = APP.history.findIndex(h => h._key === key);
+  if (idx >= 0) APP.history[idx] = newItem;
   renderHistory();
+}
+
+// ====== HISTORY RENDERING ======
+function getFilteredHistory() {
+  const search = (document.getElementById('hist-search')?.value || '').toLowerCase();
+  const now = new Date();
+
+  return APP.history.filter(item => {
+    // search
+    if (search && !item.filename.toLowerCase().includes(search)) return false;
+    // type
+    if (APP.typeFilter === 'ok' && item.status !== 'ok') return false;
+    if (APP.typeFilter === 'err' && item.status !== 'err') return false;
+    // date
+    if (APP.dateFilter !== 'all' && item.createdAt) {
+      const d = new Date(item.createdAt);
+      if (APP.dateFilter === 'today') {
+        if (d.toDateString() !== now.toDateString()) return false;
+      } else if (APP.dateFilter === 'week') {
+        const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
+        if (d < weekAgo) return false;
+      } else if (APP.dateFilter === 'month') {
+        const monthAgo = new Date(now); monthAgo.setMonth(now.getMonth() - 1);
+        if (d < monthAgo) return false;
+      }
+    }
+    return true;
+  });
 }
 
 function renderHistory() {
   const section = document.getElementById('history-section');
   const body = document.getElementById('history-body');
+  const emptyState = document.getElementById('hist-empty-state');
+  const paginationEl = document.getElementById('hist-pagination');
+
   if (!APP.history.length) { section.classList.add('hidden'); return; }
   section.classList.remove('hidden');
+
+  // Summary stats (always from all history)
+  const totalLabels = APP.history.filter(h => h.status === 'ok').reduce((s,h) => s + (h.labelCount||0), 0);
+  const totalConvs = APP.history.length;
+  document.getElementById('hist-total-badge').textContent = `Total: ${totalConvs} ${APP.lang==='pt'?'registro'+(totalConvs!==1?'s':''):'record'+(totalConvs!==1?'s':'')}`;
+  document.getElementById('hist-summary-labels').textContent = `${totalLabels} ${APP.lang==='pt'?'etiquetas':'labels'}`;
+  document.getElementById('hist-summary-convs').textContent = `${totalConvs} ${APP.lang==='pt'?'conversões':'conversions'}`;
+
+  const filtered = getFilteredHistory();
+  const pageSize = APP.PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  if (APP.histPage > totalPages) APP.histPage = 1;
+  const pageItems = filtered.slice((APP.histPage-1)*pageSize, APP.histPage*pageSize);
+
   body.innerHTML = '';
+  emptyState.classList.toggle('hidden', pageItems.length > 0);
 
-  APP.history.forEach((item, idx) => {
+  pageItems.forEach((item, idx) => {
+    const realIdx = APP.history.indexOf(item);
     const tr = document.createElement('tr');
-    tr.className = 'border-b border-gray-50 hover:bg-gray-50 transition-colors';
+    tr.className = 'hist-row';
 
+    // Date
+    const date = item.createdAt ? new Date(item.createdAt) : null;
+    const dateStr = date
+      ? date.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) + '\n' + date.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+      : '–';
+
+    // Label count badge
+    const labelBadge = item.status === 'ok'
+      ? `<span class="tag-badge" style="background:#dcfce7;color:#15803d;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          ${item.labelCount}
+        </span>`
+      : item.status === 'proc'
+      ? `<span class="tag-badge" style="background:#fef3c7;color:#d97706;"><svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>–</span>`
+      : `<span class="tag-badge" style="background:#fee2e2;color:#dc2626;">–</span>`;
+
+    // Format badge
+    const fmtColor = item.format === 'Nitidez+' ? 'background:#e0f2fe;color:#0369a1' : 'background:#ede9fe;color:#7c3aed';
+    const fmtBadge = `<span class="tag-badge" style="${fmtColor};">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      ${item.format || 'Padrão'}
+    </span>`;
+
+    // Time badge
+    const timeStr = item.time ? `<span class="tag-badge" style="background:#f3f4f6;color:#374151;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${item.time}s</span>` : '–';
+
+    // Status badge
     const statusBadge = item.status === 'ok'
-      ? `<span class="status-pronto"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>${APP.lang === 'pt' ? 'Pronto' : 'Done'}</span>`
+      ? `<span class="tag-badge" style="background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${APP.lang==='pt'?'Pronto':'Done'}</span>`
       : item.status === 'err'
-      ? `<span class="status-erro" title="${item.error || ''}"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>${APP.lang === 'pt' ? 'Erro' : 'Error'}</span>`
-      : `<span class="status-proc"><svg class="spin" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>${APP.lang === 'pt' ? 'Processando' : 'Processing'}</span>`;
+      ? `<span class="tag-badge" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;" title="${item.error||''}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>${APP.lang==='pt'?'Erro':'Error'}</span>`
+      : `<span class="tag-badge" style="background:#fef3c7;color:#d97706;"><svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>${APP.lang==='pt'?'Processando':'Processing'}</span>`;
 
-    const fmtBadge = `<span class="fmt-badge ${item.format === 'Nitidez+' ? 'fmt-nitidez' : ''}">${item.format || 'Padrão'}</span>`;
-    const timeStr = item.time ? `${item.time}s` : '–';
-
+    // Actions
     const hasLocalPdf = item.pdf && item.status === 'ok';
     const hasCloudPdf = item.cloudPdf && item.id && item.status === 'ok';
     const canDownload = hasLocalPdf || hasCloudPdf;
 
     const downloadBtn = canDownload
-      ? `<button onclick="downloadItem(${idx})" title="Download PDF" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </button>`
-      : '';
+      ? `<button onclick="downloadItem(${realIdx})" title="${APP.lang==='pt'?'Baixar PDF':'Download PDF'}" class="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>` : '';
 
-    const deleteBtn = `<button onclick="deleteItem(${idx})" title="Remover" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    const deleteBtn = `<button onclick="deleteItem(${realIdx})" title="${APP.lang==='pt'?'Remover':'Remove'}" class="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
     </button>`;
 
-    const cloudIcon = (hasCloudPdf && !hasLocalPdf)
-      ? `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" title="Salvo na nuvem" class="inline-block ml-1"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`
-      : '';
+    const fileLabel = item.fileCount > 1
+      ? `<span class="text-gray-800 font-medium text-xs">${item.filename}</span><br><span class="text-gray-400 text-xs">${item.fileCount} arquivos</span>`
+      : `<span class="text-gray-800 font-medium text-xs truncate block max-w-[140px]" title="${item.filename}">${item.filename}</span>`;
 
     tr.innerHTML = `
-      <td class="px-4 py-3 text-xs text-gray-800 max-w-[120px]">
-        <span class="truncate block font-medium" title="${item.filename}">${item.filename}</span>${cloudIcon}
+      <td class="px-5 py-3">
+        <div class="text-xs text-gray-600 whitespace-pre-line leading-4">${dateStr}</div>
+        <div class="mt-0.5">${fileLabel}</div>
       </td>
-      <td class="px-4 py-3 text-xs text-gray-600">${item.labelCount || '–'}</td>
+      <td class="px-4 py-3">${labelBadge}</td>
       <td class="px-4 py-3">${fmtBadge}</td>
-      <td class="px-4 py-3 text-xs text-gray-500 hidden sm:table-cell">${timeStr}</td>
+      <td class="px-4 py-3 hidden sm:table-cell">${timeStr}</td>
       <td class="px-4 py-3">${statusBadge}</td>
       <td class="px-4 py-3"><div class="flex items-center gap-1">${downloadBtn}${deleteBtn}</div></td>
     `;
     body.appendChild(tr);
   });
+
+  // Pagination
+  if (totalPages > 1) {
+    paginationEl.classList.remove('hidden');
+    paginationEl.innerHTML = '';
+    const pg = (n, label, active, disabled) => {
+      const btn = document.createElement('button');
+      btn.innerHTML = label;
+      btn.className = `px-3 py-1.5 text-xs rounded-lg border transition-colors ${active ? 'bg-green-600 text-white border-green-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`;
+      if (!disabled && !active) btn.onclick = () => { APP.histPage = n; renderHistory(); scrollToHistory(); };
+      return btn;
+    };
+    paginationEl.appendChild(pg(APP.histPage-1, APP.lang==='pt'?'&lsaquo; Anterior':'&lsaquo; Prev', false, APP.histPage<=1));
+    // page numbers
+    for (let p = 1; p <= totalPages; p++) {
+      if (totalPages <= 7 || Math.abs(p - APP.histPage) <= 2 || p === 1 || p === totalPages) {
+        paginationEl.appendChild(pg(p, p, p === APP.histPage, false));
+      } else if (Math.abs(p - APP.histPage) === 3) {
+        const dots = document.createElement('span'); dots.textContent = '...'; dots.className = 'px-2 text-gray-400 text-xs';
+        paginationEl.appendChild(dots);
+      }
+    }
+    paginationEl.appendChild(pg(APP.histPage+1, APP.lang==='pt'?'Próximo &rsaquo;':'Next &rsaquo;', false, APP.histPage>=totalPages));
+  } else {
+    paginationEl.classList.add('hidden');
+  }
 }
 
 function downloadItem(idx) {
   const item = APP.history[idx];
   if (!item) return;
-
   if (item.pdf) {
-    // Local blob download
     const url = URL.createObjectURL(item.pdf);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = item.filename.replace(/\.(txt|zpl)$/i, '') + '.pdf';
-    a.click();
+    const a = document.createElement('a'); a.href = url;
+    a.download = item.filename.replace(/\.(txt|zpl)$/i,'') + '.pdf'; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   } else if (item.cloudPdf && item.id) {
-    downloadCloudPdf(item.id, item.filename.replace(/\.(txt|zpl)$/i, ''));
+    downloadCloudPdf(item.id, item.filename.replace(/\.(txt|zpl)$/i,''));
   }
 }
 
 async function deleteItem(idx) {
   const item = APP.history[idx];
   if (!item) return;
-
-  if (APP.user && item.id) {
-    await deleteCloudConversion(item.id);
-  }
-
+  if (APP.user && item.id) await deleteCloudConversion(item.id);
   APP.history.splice(idx, 1);
   if (!APP.user) saveLocalHistory();
   renderHistory();
@@ -842,58 +792,52 @@ async function deleteItem(idx) {
 
 async function clearHistory() {
   if (APP.user) {
-    const ids = APP.history.filter(h => h.id).map(h => h.id);
-    for (const id of ids) {
-      await deleteCloudConversion(id);
-    }
+    for (const h of APP.history.filter(h=>h.id)) await deleteCloudConversion(h.id);
   }
   APP.history = [];
   if (!APP.user) localStorage.removeItem('zpl_history');
   renderHistory();
 }
 
+// ====== FILTERS ======
+function setDateFilter(val) {
+  APP.dateFilter = val; APP.histPage = 1;
+  const labels = {all:'Todas as datas',today:'Hoje',week:'Esta semana',month:'Este mês'};
+  document.getElementById('date-filter-label').textContent = labels[val];
+  document.querySelectorAll('#date-filter-dd button').forEach(b => b.classList.toggle('active', b.textContent.trim()===labels[val]));
+  closeDropdown('date-filter-dd'); renderHistory();
+}
+function setTypeFilter(val) {
+  APP.typeFilter = val; APP.histPage = 1;
+  const labels = {all:'Todos os tipos',ok:'✓ Pronto',err:'✗ Erro'};
+  document.getElementById('type-filter-label').textContent = labels[val];
+  document.querySelectorAll('#type-filter-dd button').forEach(b => b.classList.toggle('active', b.textContent.trim()===labels[val].trim()));
+  closeDropdown('type-filter-dd'); renderHistory();
+}
+
 // ====== PREVIEW ======
 function showPreview(name, blobs) {
   document.getElementById('preview-empty').classList.add('hidden');
-  const content = document.getElementById('preview-content');
-  content.classList.remove('hidden');
-  content.classList.add('flex');
+  const c = document.getElementById('preview-content'); c.classList.remove('hidden'); c.classList.add('flex');
   document.getElementById('preview-title').textContent = name;
   setPreviewIdx(0);
-  updatePageInfo();
 }
-
 function setPreviewIdx(idx) {
   if (!APP.previewImgs.length) return;
-  APP.previewIdx = Math.max(0, Math.min(idx, APP.previewImgs.length - 1));
+  APP.previewIdx = Math.max(0, Math.min(idx, APP.previewImgs.length-1));
   document.getElementById('preview-img').src = APP.previewImgs[APP.previewIdx];
-  updatePageInfo();
-}
-
-function updatePageInfo() {
   const el = document.getElementById('preview-page-info');
-  if (APP.previewImgs.length > 1) {
-    el.textContent = `${APP.previewIdx + 1} / ${APP.previewImgs.length}`;
-  } else {
-    el.textContent = '';
-  }
+  el.textContent = APP.previewImgs.length > 1 ? `${APP.previewIdx+1} / ${APP.previewImgs.length}` : '';
 }
-
-function prevPreview() { setPreviewIdx(APP.previewIdx - 1); }
-function nextPreview() { setPreviewIdx(APP.previewIdx + 1); }
+function prevPreview() { setPreviewIdx(APP.previewIdx-1); }
+function nextPreview() { setPreviewIdx(APP.previewIdx+1); }
 
 // ====== DRAG & DROP ======
-function handleDragOver(e) {
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.add('drop-active');
-}
-function handleDragLeave(e) {
-  document.getElementById('drop-zone').classList.remove('drop-active');
-}
+function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drop-active'); }
+function handleDragLeave() { document.getElementById('drop-zone').classList.remove('drop-active'); }
 function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.remove('drop-active');
-  const files = Array.from(e.dataTransfer.files).filter(f => /\.(txt|zpl|zip)$/i.test(f.name));
+  e.preventDefault(); document.getElementById('drop-zone').classList.remove('drop-active');
+  const files = Array.from(e.dataTransfer.files).filter(f=>/\.(txt|zpl|zip)$/i.test(f.name));
   if (files.length) processFiles(files);
 }
 function handleFileInput(e) {
@@ -902,129 +846,103 @@ function handleFileInput(e) {
   e.target.value = '';
 }
 
-// ====== FORMAT SELECTOR ======
+// ====== FORMAT ======
 function setFormat(fmt) {
   APP.selectedFormat = fmt;
-  const btn1 = document.getElementById('fmt-padrao');
-  const btn2 = document.getElementById('fmt-nitidez');
+  const p = document.getElementById('fmt-padrao'), n = document.getElementById('fmt-nitidez');
   if (fmt === 'Padrão') {
-    btn1.className = 'px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all';
-    btn2.className = 'px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all';
+    p.className = 'px-3 py-1.5 text-xs rounded-lg border border-green-500 bg-green-50 text-green-700 font-medium transition-all';
+    n.className = 'px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all';
   } else {
-    btn2.className = 'px-3 py-1.5 text-xs rounded-lg border border-blue-500 bg-blue-50 text-blue-700 font-medium transition-all';
-    btn1.className = 'px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all';
+    n.className = 'px-3 py-1.5 text-xs rounded-lg border border-blue-500 bg-blue-50 text-blue-700 font-medium transition-all';
+    p.className = 'px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white text-gray-500 font-medium transition-all';
   }
 }
 
-// ====== PROGRESS BAR ======
-function showProgressBar(visible) {
-  document.getElementById('progress-bar-wrap').classList.toggle('hidden', !visible);
-  if (!visible) {
-    document.getElementById('progress-bar').style.width = '0%';
-  }
+// ====== PROGRESS ======
+function showProgressBar(v) {
+  document.getElementById('progress-bar-wrap').classList.toggle('hidden',!v);
+  if(!v) document.getElementById('progress-bar').style.width='0%';
 }
 function updateProgress(label, done, total) {
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const pct = total>0 ? Math.round((done/total)*100) : 0;
   document.getElementById('progress-label').textContent = label;
-  document.getElementById('progress-pct').textContent = pct + '%';
-  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct+'%';
+  document.getElementById('progress-bar').style.width = pct+'%';
 }
 
-// ====== MODAL UTILS ======
+// ====== MODALS ======
 function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-// ====== DROPDOWN UTILS ======
-function toggleDropdown(ddId, ovId) {
+// ====== DROPDOWNS ======
+function toggleDropdown(ddId) {
   const dd = document.getElementById(ddId);
-  const ov = ovId ? document.getElementById(ovId) : null;
-  const isHidden = dd.classList.contains('hidden');
-  dd.classList.toggle('hidden', !isHidden);
-  if (ov) ov.classList.toggle('hidden', !isHidden);
+  if (!dd) return;
+  const wasHidden = dd.classList.contains('hidden');
+  // close all dropdowns first
+  document.querySelectorAll('.filter-dd, #lang-dd, #user-dd').forEach(d => d.classList.add('hidden'));
+  if (wasHidden) dd.classList.remove('hidden');
 }
-function closeDropdown(ddId, ovId) {
-  const dd = document.getElementById(ddId);
-  if (dd) dd.classList.add('hidden');
-  if (ovId) { const ov = document.getElementById(ovId); if (ov) ov.classList.add('hidden'); }
+function closeDropdown(ddId) {
+  const dd = document.getElementById(ddId); if (dd) dd.classList.add('hidden');
 }
 
 // ====== TOAST ======
-let toastTimer = null;
-function showToast(msg, duration) {
-  duration = duration || 2800;
-  const inner = document.getElementById('toast-inner');
-  inner.textContent = msg;
-  inner.classList.remove('hidden');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => inner.classList.add('hidden'), duration);
+let _toastT = null;
+function showToast(msg, ms) {
+  ms = ms||2800;
+  const el = document.getElementById('toast-inner');
+  el.textContent = msg; el.classList.remove('hidden');
+  if (_toastT) clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.add('hidden'), ms);
 }
 
-// ====== SCROLL TO HISTORY ======
+// ====== SCROLL ======
 function scrollToHistory() {
   const el = document.getElementById('history-section');
-  if (el && !el.classList.contains('hidden')) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (el && !el.classList.contains('hidden')) el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // ====== LANGUAGE ======
-const TEXTS = {
-  pt: {
-    betaText: '⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.',
-    uploadLabel: 'Carregue seus arquivos ZPL para convertê-los para o formato PDF',
-    dropMain: 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)',
-    formats: 'Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL',
-    previewEmpty: 'Pré-visualização aparecerá aqui',
-    historyTitle: 'Histórico de Conversões',
-    thFile: 'Arquivo', thLabels: 'Etiquetas', thFormat: 'Formato', thTime: 'Tempo', thStatus: 'Status',
-  },
-  en: {
-    betaText: '⚙️ This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.',
-    uploadLabel: 'Upload your ZPL files to convert them to PDF format',
-    dropMain: 'Drag and drop your files here (multiple files supported)',
-    formats: 'Accepted formats: .txt, .zpl or .zip with ZPL files',
-    previewEmpty: 'Preview will appear here',
-    historyTitle: 'Conversion History',
-    thFile: 'File', thLabels: 'Labels', thFormat: 'Format', thTime: 'Time', thStatus: 'Status',
-  }
-};
-
 function setLang(lang) {
   APP.lang = lang;
-  document.documentElement.lang = lang;
   localStorage.setItem('zpl_lang', lang);
-  closeDropdown('lang-dd', 'lang-ov');
-
-  const T = TEXTS[lang];
-  document.getElementById('beta-text').textContent = T.betaText;
-  document.getElementById('upload-label-text').textContent = T.uploadLabel;
-  document.getElementById('drop-main-text').textContent = T.dropMain;
-  document.getElementById('formats-text').textContent = T.formats;
-  document.getElementById('preview-empty-text').textContent = T.previewEmpty;
-  document.getElementById('history-title').textContent = T.historyTitle;
-  document.getElementById('th-file').textContent = T.thFile;
-  document.getElementById('th-labels').textContent = T.thLabels;
-  document.getElementById('th-format').textContent = T.thFormat;
-  document.getElementById('th-time').textContent = T.thTime;
-  document.getElementById('th-status').textContent = T.thStatus;
-
+  document.documentElement.lang = lang;
+  closeDropdown('lang-dd');
+  const pt = lang === 'pt';
+  document.getElementById('beta-text').textContent = pt
+    ? '⚙️ Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.'
+    : '⚙️ This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.';
+  document.getElementById('upload-label-text').textContent = pt ? 'Carregue seus arquivos ZPL para convertê-los para o formato PDF' : 'Upload your ZPL files to convert them to PDF format';
+  document.getElementById('drop-main-text').textContent = pt ? 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)' : 'Drag and drop your files here (multiple files supported)';
+  document.getElementById('formats-text').textContent = pt ? 'Formatos aceitos: .txt, .zpl ou .zip com arquivos ZPL' : 'Accepted formats: .txt, .zpl or .zip with ZPL files';
+  document.getElementById('merge-hint-text').textContent = pt ? '✓ Vários arquivos serão unidos em um único PDF' : '✓ Multiple files will be merged into a single PDF';
+  document.getElementById('preview-empty-text').textContent = pt ? 'Pré-visualização aparecerá aqui' : 'Preview will appear here';
+  document.getElementById('hist-title').textContent = pt ? 'Histórico de Processamento' : 'Processing History';
+  document.getElementById('th-date').textContent = pt ? 'Data' : 'Date';
+  document.getElementById('th-labels').textContent = pt ? 'Quantidade de Etiquetas' : 'Label Count';
+  document.getElementById('th-format').textContent = pt ? 'Formato de Impressão' : 'Print Format';
+  document.getElementById('th-time').textContent = pt ? 'Processando...' : 'Processing...';
+  document.getElementById('th-status').textContent = 'Status';
   document.getElementById('check-pt').classList.toggle('hidden', lang !== 'pt');
   document.getElementById('check-en').classList.toggle('hidden', lang !== 'en');
-
   renderHistory();
 }
 
 // ====== FEEDBACK ======
 function submitFeedback() {
-  const text = document.getElementById('feedback-text').value.trim();
-  if (!text) return;
+  const t = document.getElementById('feedback-text').value.trim();
+  if (!t) return;
   document.getElementById('feedback-text').value = '';
   hideModal('feedback-modal');
-  showToast(APP.lang === 'pt' ? 'Feedback enviado! Obrigado ✓' : 'Feedback sent! Thank you ✓');
+  showToast(APP.lang==='pt'?'Feedback enviado! Obrigado ✓':'Feedback sent! Thank you ✓');
 }
 
 // ====== INIT ======
 (async function init() {
-  const savedLang = localStorage.getItem('zpl_lang') || 'pt';
-  setLang(savedLang);
+  const lang = localStorage.getItem('zpl_lang') || 'pt';
+  setLang(lang);
   setFormat('Padrão');
 
   // Close modals on overlay click
@@ -1032,22 +950,18 @@ function submitFeedback() {
     el.addEventListener('click', e => { if (e.target === el) el.classList.add('hidden'); });
   });
 
-  // Init Supabase auth
-  await initAuth();
-
-  // Load local history if not logged in (will be replaced by cloud if user logs in)
-  if (!APP.user) {
-    loadLocalHistory();
-  }
-
-  // Close lang dropdown on click outside
+  // Close dropdowns on outside click
   document.addEventListener('click', e => {
-    const langBtn = document.getElementById('lang-btn');
-    const langDd = document.getElementById('lang-dd');
-    if (langDd && !langDd.classList.contains('hidden') && !langDd.contains(e.target) && !langBtn.contains(e.target)) {
-      langDd.classList.add('hidden');
-    }
+    const triggers = ['lang-btn', 'nav-user-btn'];
+    const dds = ['lang-dd','user-dd','date-filter-dd','type-filter-dd'];
+    const clickedInside = dds.some(id => { const el=document.getElementById(id); return el&&el.contains(e.target); })
+      || triggers.some(id => { const el=document.getElementById(id); return el&&el.contains(e.target); })
+      || e.target.closest('.filter-btn');
+    if (!clickedInside) dds.forEach(id => closeDropdown(id));
   });
+
+  await initAuth();
+  if (!APP.user) loadLocalHistory();
 })();
 </script>
 </body>
