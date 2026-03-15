@@ -1194,11 +1194,10 @@ async function downloadCloudPdf(id, filename) {
 }
 
 // ====== ZPL PROCESSING ======
-function getLabelBlocks(zpl) {
-  // Extrai cada bloco ^XA...^XZ individualmente para enviar um por vez à Labelary.
-  // Sem filtro — a API retorna null para blocos sem conteúdo visível, que são ignorados naturalmente.
+function getLabelCount(zpl) {
+  // Conta quantos blocos ^XA...^XZ existem no arquivo para iterar todos os índices.
   const m=zpl.match(/\^XA[\s\S]*?\^XZ/gi);
-  return (m && m.length) ? m : [zpl];
+  return (m && m.length) ? m.length : 1;
 }
 async function fetchLabel(zpl,index,dpmm,w,h,retry) {
   retry=retry||0;
@@ -1262,16 +1261,17 @@ async function processFiles(files) {
     for (let fi = 0; fi < allFiles.length; fi++) {
       const { name, content } = allFiles[fi];
       const zpl = content.trim();
-      const labelBlocks = getLabelBlocks(zpl);
-      const totalSteps = allFiles.length * labelBlocks.length;
+      // Envia o ZPL completo por índice para preservar contexto de templates (^XF, ^DF).
+      // Itera TODOS os índices (sem filtro) — Labelary retorna null para blocos não imprimíveis.
+      const labelCount = getLabelCount(zpl);
+      const totalSteps = allFiles.length * labelCount;
 
-      for (let i = 0; i < labelBlocks.length; i++) {
-        const step = fi * labelBlocks.length + i;
-        const label = fileCount > 1 ? `${name} (${i+1}/${labelBlocks.length})` : `Etiqueta ${i+1} de ${labelBlocks.length}`;
+      for (let i = 0; i < labelCount; i++) {
+        const step = fi * labelCount + i;
+        const label = fileCount > 1 ? `${name} (${i+1}/${labelCount})` : `Etiqueta ${i+1} de ${labelCount}`;
         updateProgress(label, step, totalSteps || 1);
 
-        // Envia cada bloco individualmente como índice 0 — sem limite de 10 por arquivo
-        const blob = await fetchLabel(labelBlocks[i], 0, dpmm, w, h);
+        const blob = await fetchLabel(zpl, i, dpmm, w, h);
         if (blob) { imgs.push(blob); previewBlobs.push(blob); totalLabels++; }
       }
     }
