@@ -1200,12 +1200,13 @@ function isPrintableLabel(block) {
   if(inner.length<4) return false;
   return true;
 }
-function getPrintableLabelIndices(zpl) {
+function getPrintableLabelBlocks(zpl) {
+  // Extrai cada bloco ^XA...^XZ individualmente para enviar um por vez à Labelary
+  // (evita o limite de 10 labels por chamada da API)
   const m=zpl.match(/\^XA[\s\S]*?\^XZ/gi);
-  if(!m) return [0];
-  const indices=[];
-  m.forEach((block,i)=>{if(isPrintableLabel(block))indices.push(i);});
-  return indices.length?indices:[0];
+  if(!m) return [zpl];
+  const blocks=m.filter(b=>isPrintableLabel(b));
+  return blocks.length?blocks:[zpl];
 }
 async function fetchLabel(zpl,index,dpmm,w,h,retry) {
   retry=retry||0;
@@ -1269,15 +1270,16 @@ async function processFiles(files) {
     for (let fi = 0; fi < allFiles.length; fi++) {
       const { name, content } = allFiles[fi];
       const zpl = content.trim();
-      const labelIndices = getPrintableLabelIndices(zpl);
-      const totalSteps = allFiles.length * labelIndices.length;
+      const labelBlocks = getPrintableLabelBlocks(zpl);
+      const totalSteps = allFiles.length * labelBlocks.length;
 
-      for (let i = 0; i < labelIndices.length; i++) {
-        const step = fi * labelIndices.length + i;
-        const label = fileCount > 1 ? `${name} (${i+1}/${labelIndices.length})` : `Etiqueta ${i+1} de ${labelIndices.length}`;
+      for (let i = 0; i < labelBlocks.length; i++) {
+        const step = fi * labelBlocks.length + i;
+        const label = fileCount > 1 ? `${name} (${i+1}/${labelBlocks.length})` : `Etiqueta ${i+1} de ${labelBlocks.length}`;
         updateProgress(label, step, totalSteps || 1);
 
-        const blob = await fetchLabel(zpl, labelIndices[i], dpmm, w, h);
+        // Envia cada bloco individualmente como índice 0 — sem limite de 10 por arquivo
+        const blob = await fetchLabel(labelBlocks[i], 0, dpmm, w, h);
         if (blob) { imgs.push(blob); previewBlobs.push(blob); totalLabels++; }
       }
     }
