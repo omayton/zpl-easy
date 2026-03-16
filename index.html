@@ -1268,7 +1268,8 @@ async function processFiles(files) {
 
       for (let i = 0; i < labelCount; i++) {
         const step = fi * labelCount + i;
-        const label = fileCount > 1 ? `${name} (${i+1}/${labelCount})` : `Etiqueta ${i+1} de ${labelCount}`;
+        // Mostra etiquetas renderizadas até agora (totalLabels), não o total de blocos ZPL
+        const label = fileCount > 1 ? `${name} — processando bloco ${i+1}` : `Processando etiqueta ${totalLabels + 1}...`;
         updateProgress(label, step, totalSteps || 1);
 
         const blob = await fetchLabel(zpl, i, dpmm, w, h);
