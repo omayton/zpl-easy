@@ -1195,27 +1195,35 @@ async function downloadCloudPdf(id, filename) {
 
 // ====== ZPL PROCESSING ======
 function getEffectiveLabelZPLs(zpl) {
-  // Extrai "unidades imprimíveis" do ZPL, combinando pares ^DF (template) + ^XF (dados)
-  // para que a Labelary tenha contexto completo ao renderizar labels DANFE e similares.
+  // Separa blocos de template (^DF sem ^FD = só define formato, não imprime)
+  // dos blocos imprimíveis (têm ^FD = dados reais, ou não usam templates).
+  // Para blocos que referenciam template via ^XF, prepend os templates como contexto.
   const blocks = zpl.match(/\^XA[\s\S]*?\^XZ/gi) || [];
   if (!blocks.length) return [{ zpl, index: 0 }];
 
-  const effective = [];
-  let i = 0;
-  while (i < blocks.length) {
-    const block = blocks[i];
-    if (/\^DF/i.test(block) && i + 1 < blocks.length) {
-      // Bloco de definição de template (^DF): combinar com o próximo bloco de dados (^XF)
-      // e pedir índice 1 (o bloco de dados dentro do ZPL combinado)
-      effective.push({ zpl: block + '\n' + blocks[i + 1], index: 1 });
-      i += 2;
-    } else {
-      // Bloco auto-suficiente (etiqueta de envio, etc.) → enviar sozinho como índice 0
-      effective.push({ zpl: block, index: 0 });
-      i++;
-    }
+  // Bloco de template puro: tem ^DF mas NÃO tem ^FD (sem dados reais para imprimir)
+  const isTemplate = b => /\^DF/i.test(b) && !/\^FD/i.test(b);
+
+  const templateBlocks = blocks.filter(isTemplate);
+  const printableBlocks = blocks.filter(b => !isTemplate(b));
+
+  if (!templateBlocks.length) {
+    // Sem templates: todos os blocos são auto-suficientes
+    return printableBlocks.map(b => ({ zpl: b, index: 0 }));
   }
-  return effective.length ? effective : [{ zpl, index: 0 }];
+
+  // Pré-montar contexto de templates para os blocos que usam ^XF (recall de formato)
+  const templateContext = templateBlocks.join('\n');
+  const templateCount = templateBlocks.length;
+
+  return printableBlocks.map(block => {
+    if (/\^XF/i.test(block)) {
+      // Bloco DANFE: precisa dos templates → envia templates + bloco, pede índice templateCount
+      return { zpl: templateContext + '\n' + block, index: templateCount };
+    }
+    // Bloco auto-suficiente (etiqueta de envio, etc.)
+    return { zpl: block, index: 0 };
+  });
 }
 async function fetchLabel(zpl,index,dpmm,w,h,retry) {
   retry=retry||0;
@@ -1282,11 +1290,15 @@ async function processFiles(files) {
       // Combina pares ^DF (template DANFE) + ^XF (dados) para preservar contexto.
       // Etiquetas auto-suficientes são enviadas sozinhas como índice 0.
       const effectiveLabels = getEffectiveLabelZPLs(zpl);
-      const totalSteps = allFiles.length * effectiveLabels.length;
+      const fileTotal = effectiveLabels.length; // total real de etiquetas imprimíveis
+      const totalSteps = allFiles.length * fileTotal;
 
-      for (let i = 0; i < effectiveLabels.length; i++) {
-        const step = fi * effectiveLabels.length + i;
-        const label = fileCount > 1 ? `${name} — processando ${i+1}` : `Processando etiqueta ${totalLabels + 1}...`;
+      for (let i = 0; i < fileTotal; i++) {
+        const step = fi * fileTotal + i;
+        // Mostra "Etiqueta X de 14" com o total correto (blocos de template já excluídos)
+        const label = fileCount > 1
+          ? `${name}: etiqueta ${i+1} de ${fileTotal}`
+          : `Etiqueta ${i+1} de ${fileTotal}`;
         updateProgress(label, step, totalSteps || 1);
 
         const { zpl: labelZpl, index: labelIdx } = effectiveLabels[i];
