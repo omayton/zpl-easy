@@ -1194,10 +1194,28 @@ async function downloadCloudPdf(id, filename) {
 }
 
 // ====== ZPL PROCESSING ======
-function getLabelCount(zpl) {
-  // Conta quantos blocos ^XA...^XZ existem no arquivo para iterar todos os índices.
-  const m=zpl.match(/\^XA[\s\S]*?\^XZ/gi);
-  return (m && m.length) ? m.length : 1;
+function getEffectiveLabelZPLs(zpl) {
+  // Extrai "unidades imprimíveis" do ZPL, combinando pares ^DF (template) + ^XF (dados)
+  // para que a Labelary tenha contexto completo ao renderizar labels DANFE e similares.
+  const blocks = zpl.match(/\^XA[\s\S]*?\^XZ/gi) || [];
+  if (!blocks.length) return [{ zpl, index: 0 }];
+
+  const effective = [];
+  let i = 0;
+  while (i < blocks.length) {
+    const block = blocks[i];
+    if (/\^DF/i.test(block) && i + 1 < blocks.length) {
+      // Bloco de definição de template (^DF): combinar com o próximo bloco de dados (^XF)
+      // e pedir índice 1 (o bloco de dados dentro do ZPL combinado)
+      effective.push({ zpl: block + '\n' + blocks[i + 1], index: 1 });
+      i += 2;
+    } else {
+      // Bloco auto-suficiente (etiqueta de envio, etc.) → enviar sozinho como índice 0
+      effective.push({ zpl: block, index: 0 });
+      i++;
+    }
+  }
+  return effective.length ? effective : [{ zpl, index: 0 }];
 }
 async function fetchLabel(zpl,index,dpmm,w,h,retry) {
   retry=retry||0;
@@ -1261,18 +1279,18 @@ async function processFiles(files) {
     for (let fi = 0; fi < allFiles.length; fi++) {
       const { name, content } = allFiles[fi];
       const zpl = content.trim();
-      // Envia o ZPL completo por índice para preservar contexto de templates (^XF, ^DF).
-      // Itera TODOS os índices (sem filtro) — Labelary retorna null para blocos não imprimíveis.
-      const labelCount = getLabelCount(zpl);
-      const totalSteps = allFiles.length * labelCount;
+      // Combina pares ^DF (template DANFE) + ^XF (dados) para preservar contexto.
+      // Etiquetas auto-suficientes são enviadas sozinhas como índice 0.
+      const effectiveLabels = getEffectiveLabelZPLs(zpl);
+      const totalSteps = allFiles.length * effectiveLabels.length;
 
-      for (let i = 0; i < labelCount; i++) {
-        const step = fi * labelCount + i;
-        // Mostra etiquetas renderizadas até agora (totalLabels), não o total de blocos ZPL
-        const label = fileCount > 1 ? `${name} — processando bloco ${i+1}` : `Processando etiqueta ${totalLabels + 1}...`;
+      for (let i = 0; i < effectiveLabels.length; i++) {
+        const step = fi * effectiveLabels.length + i;
+        const label = fileCount > 1 ? `${name} — processando ${i+1}` : `Processando etiqueta ${totalLabels + 1}...`;
         updateProgress(label, step, totalSteps || 1);
 
-        const blob = await fetchLabel(zpl, i, dpmm, w, h);
+        const { zpl: labelZpl, index: labelIdx } = effectiveLabels[i];
+        const blob = await fetchLabel(labelZpl, labelIdx, dpmm, w, h);
         if (blob) { imgs.push(blob); previewBlobs.push(blob); totalLabels++; }
       }
     }
